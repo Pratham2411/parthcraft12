@@ -69,13 +69,7 @@ npm run dev            # http://localhost:3000
 - Campus announcements (notification bell)
 - User feedback to admins
 
-## Documentation
 
-| Doc | Description |
-|-----|-------------|
-| [docs/README.md](./docs/README.md) | Documentation index |
-| **[docs/07-interview-guide.md](./docs/07-interview-guide.md)** | **Complete interview preparation** |
-| [docs/CLOUDINARY_SETUP.md](./docs/CLOUDINARY_SETUP.md) | Cloudinary setup steps |
 
 ## Deployment
 
@@ -125,4 +119,3 @@ Full route details: [docs/02-architecture.md](./docs/02-architecture.md)
 - Payment integration
 - TypeScript or Redux
 
-See [docs/07-interview-guide.md](./docs/07-interview-guide.md) for interview scope.
