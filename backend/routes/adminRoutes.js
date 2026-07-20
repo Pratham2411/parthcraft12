@@ -11,8 +11,17 @@ const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
 const { formatUser } = require('../utils/formatUser');
 const { unlinkProductImages } = require('../utils/productImages');
+const rateLimit = require('express-rate-limit');
 
-router.use(auth, admin);
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 admin actions per 15 mins
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many admin actions. Please try again later.' },
+});
+
+router.use(auth, admin, adminLimiter);
 
 router.get('/stats', async (req, res) => {
   try {

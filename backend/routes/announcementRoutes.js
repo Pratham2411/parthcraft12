@@ -4,6 +4,15 @@ const AnnouncementRead = require('../models/AnnouncementRead');
 const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const { activeAnnouncementFilter } = require('../utils/announcementQuery');
+const rateLimit = require('express-rate-limit');
+
+const announcementReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // 30 read actions per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many actions. Please try again later.' },
+});
 
 const formatAnnouncement = (doc, readIds) => ({
   _id: doc._id,
@@ -52,7 +61,7 @@ router.get('/unread-count', auth, async (req, res) => {
   }
 });
 
-router.post('/read-all', auth, async (req, res) => {
+router.post('/read-all', auth, announcementReadLimiter, async (req, res) => {
   try {
     const active = await Announcement.find(activeAnnouncementFilter()).select('_id');
     if (!active.length) return res.json({ message: 'All marked as read' });
@@ -72,7 +81,7 @@ router.post('/read-all', auth, async (req, res) => {
   }
 });
 
-router.post('/:id/read', auth, async (req, res) => {
+router.post('/:id/read', auth, announcementReadLimiter, async (req, res) => {
   try {
     const announcement = await Announcement.findOne({
       _id: req.params.id,

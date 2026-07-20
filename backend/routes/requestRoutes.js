@@ -16,6 +16,14 @@ const requestLimiter = rateLimit({
   message: { message: 'Item request limit reached. Please try again later.' },
 });
 
+const requestContactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // max 5 contact emails per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Contact limit reached. Please try again later.' },
+});
+
 const REQUEST_CATEGORIES = ['Books', 'Electronics', 'Clothing', 'Furniture', 'Stationery', 'Sports', 'Other'];
 const REQUEST_STATUSES = ['open', 'fulfilled'];
 const REQUESTER_PUBLIC_FIELDS = 'name avatarUrl isVerifiedStudent phone';
@@ -93,7 +101,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   }
 });
 
-router.post('/:id/contact', auth, async (req, res) => {
+router.post('/:id/contact', auth, requestContactLimiter, async (req, res) => {
   try {
     const providerId = String(req.user.id);
     const request = await ItemRequest.findById(req.params.id).populate('requester', REQUESTER_CONTACT_FIELDS);

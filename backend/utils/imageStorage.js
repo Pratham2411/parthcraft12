@@ -31,9 +31,14 @@ const getPublicIdFromUrl = (url) => {
   }
 };
 
+const crypto = require('crypto');
+
 const saveToLocalDisk = (file) => {
   if (!fs.existsSync(UPLOAD_ROOT)) fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
-  const filename = `${Date.now()}-${Math.round(Math.random() * 1e6)}-${file.originalname.replace(/\s+/g, '_')}`;
+  // Force a safe filename and strict extension to prevent Path Traversal and Stored XSS
+  const ext = file.mimetype === 'image/png' ? '.png' : '.jpg';
+  const randomId = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+  const filename = `${Date.now()}-${randomId}${ext}`;
   fs.writeFileSync(path.join(UPLOAD_ROOT, filename), file.buffer);
   return `/uploads/${filename}`;
 };
@@ -69,7 +74,10 @@ const uploadFiles = async (files, subfolder = 'products') => {
 
 const deleteLocalFile = (url) => {
   if (!isLocalUploadUrl(url)) return;
-  const filePath = path.join(__dirname, '..', url);
+  // Use path.basename to strip any path traversal sequences like '../' from the URL
+  const filename = path.basename(url);
+  if (!filename) return;
+  const filePath = path.join(UPLOAD_ROOT, filename);
   try {
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   } catch {

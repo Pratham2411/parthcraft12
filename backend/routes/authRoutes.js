@@ -33,6 +33,14 @@ const otpLimiter = rateLimit({
   message: { message: 'Too many OTP requests, please try again after 15 minutes.' },
 });
 
+const profileLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // max 20 profile updates/deletes per 15 mins
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many profile updates, please try again after 15 minutes.' },
+});
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const NITP_DOMAIN = '@nitp.ac.in';
@@ -457,7 +465,7 @@ router.get('/me', auth, async (req, res) => {
 
 // ─── PATCH /api/auth/me ───────────────────────────────────────────────────────
 
-router.patch('/me', auth, uploadAvatar, async (req, res) => {
+router.patch('/me', auth, profileLimiter, uploadAvatar, async (req, res) => {
   try {
     const user = req.userDoc;
     if (!user) return res.status(401).json({ message: 'User not found' });
@@ -494,7 +502,7 @@ router.patch('/me', auth, uploadAvatar, async (req, res) => {
 
 // ─── DELETE /api/auth/me ──────────────────────────────────────────────────────
 
-router.delete('/me', auth, async (req, res) => {
+router.delete('/me', auth, profileLimiter, async (req, res) => {
   try {
     const userId = req.userDoc?._id?.toString() || req.user.id;
 

@@ -99,6 +99,11 @@ app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // ─── Global Error Handler (prevents leaking internals) ──────────────────────
 app.use((err, req, res, _next) => {
+  // Handle invalid ObjectIds gracefully
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
+    return res.status(400).json({ message: 'Invalid ID format' });
+  }
+
   console.error('Unhandled error:', err);
   const statusCode = err.statusCode || 500;
   const message = process.env.NODE_ENV === 'production'
