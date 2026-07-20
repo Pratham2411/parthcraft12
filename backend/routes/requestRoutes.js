@@ -6,6 +6,15 @@ const auth = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const { sendRequestOfferEmail } = require('../utils/resendEmail');
 const NotificationQueue = require('../models/NotificationQueue');
+const rateLimit = require('express-rate-limit');
+
+const requestLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 requests per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Item request limit reached. Please try again later.' },
+});
 
 const REQUEST_CATEGORIES = ['Books', 'Electronics', 'Clothing', 'Furniture', 'Stationery', 'Sports', 'Other'];
 const REQUEST_STATUSES = ['open', 'fulfilled'];
@@ -44,7 +53,7 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // POST new item request
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requestLimiter, async (req, res) => {
   try {
     const title = String(req.body.title || '').trim();
     const description = String(req.body.description || '').trim();

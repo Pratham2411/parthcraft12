@@ -3,6 +3,15 @@ const Comment = require('../models/Comment');
 const Product = require('../models/Product');
 const NotificationQueue = require('../models/NotificationQueue');
 const auth = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
+
+const commentLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 comments per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'You are posting comments too quickly. Please slow down.' },
+});
 router.get('/product/:productId', async (req, res) => {
   try {
     const comments = await Comment.find({ product: req.params.productId })
@@ -14,7 +23,7 @@ router.get('/product/:productId', async (req, res) => {
   }
 });
 
-router.post('/product/:productId', auth, async (req, res) => {
+router.post('/product/:productId', auth, commentLimiter, async (req, res) => {
   try {
     const { text, replyTo } = req.body;
     if (!text?.trim()) return res.status(400).json({ message: 'Comment text is required' });

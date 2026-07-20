@@ -1,6 +1,8 @@
 {
   "short_name": "NITP Market",
   "name": "NIT Patna Student Marketplace",
+  "description": "The official student marketplace for NIT Patna. Buy and sell textbooks, electronics, furniture, and more within your campus community.",
+  "categories": ["shopping", "education", "social"],
   "icons": [
     {
       "src": "/nitp-logo.png",
@@ -18,3 +20,4 @@
   "theme_color": "#0a0e1a",
   "background_color": "#0a0e1a"
 }
+

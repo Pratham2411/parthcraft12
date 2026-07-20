@@ -1,8 +1,17 @@
 const router = require('express').Router();
 const Feedback = require('../models/Feedback');
 const auth = require('../middleware/auth');
+const rateLimit = require('express-rate-limit');
 
-router.post('/', auth, async (req, res) => {
+const feedbackLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 feedbacks per hour
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Feedback limit reached. Please try again later.' },
+});
+
+router.post('/', auth, feedbackLimiter, async (req, res) => {
   try {
     const { subject, message } = req.body;
     if (!subject?.trim()) return res.status(400).json({ message: 'Subject is required' });

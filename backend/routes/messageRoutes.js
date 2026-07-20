@@ -6,6 +6,15 @@ const auth = require('../middleware/auth');
 const User = require('../models/User');
 const { sendNewMessageEmail } = require('../utils/resendEmail');
 const NotificationQueue = require('../models/NotificationQueue');
+const rateLimit = require('express-rate-limit');
+
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 messages per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'You are sending messages too quickly. Please slow down.' },
+});
 
 const userFields = 'name role avatarUrl phone email';
 const productFields = 'title imageUrl imageUrls status price seller';
@@ -177,7 +186,7 @@ router.get('/:productId/:otherUserId', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, messageLimiter, async (req, res) => {
   try {
     const { productId, itemRequestId, receiverId, text } = req.body;
 

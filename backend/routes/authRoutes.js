@@ -5,6 +5,7 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { formatUser } = require('../utils/formatUser');
 const { isAdminEmail } = require('../config/admins');
+const rateLimit = require('express-rate-limit');
 
 const crypto = require('crypto');
 const PendingUser = require('../models/PendingUser');
@@ -14,6 +15,23 @@ const Product = require('../models/Product');
 const Comment = require('../models/Comment');
 const ItemRequest = require('../models/ItemRequest');
 const RequestContact = require('../models/RequestContact');
+
+// ─── Rate Limiters for Auth Endpoints ───────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts, please try again after 15 minutes.' },
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many OTP requests, please try again after 15 minutes.' },
+});
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -60,7 +78,7 @@ const uploadAvatar = createUpload(1, 2).single('image');
 
 // ─── OTP SIGNUP FLOW ─────────────────────────────────────────────────────────
 
-router.post('/register/send-otp', async (req, res) => {
+router.post('/register/send-otp', otpLimiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -127,11 +145,11 @@ router.post('/register/send-otp', async (req, res) => {
     res.status(200).json({ message: 'OTP sent to your email', email: emailLower });
   } catch (err) {
     console.error('Send OTP error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
-router.post('/register/verify-otp', async (req, res) => {
+router.post('/register/verify-otp', authLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required' });
@@ -196,11 +214,11 @@ router.post('/register/verify-otp', async (req, res) => {
     return res.status(201).json({ token: signToken(user), user: formatUser(user) });
   } catch (err) {
     console.error('Verify OTP error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
-router.post('/register/resend-otp', async (req, res) => {
+router.post('/register/resend-otp', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
@@ -234,13 +252,13 @@ router.post('/register/resend-otp', async (req, res) => {
     res.status(200).json({ message: 'New OTP sent to your email' });
   } catch (err) {
     console.error('Resend OTP error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
 // ─── POST /api/auth/register ─────────────────────────────────────────────────
 
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -298,7 +316,7 @@ router.post('/register', async (req, res) => {
 
 // ─── POST /api/auth/forgot-password ──────────────────────────────────────────
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
@@ -328,6 +346,7 @@ router.post('/forgot-password', async (req, res) => {
 
     user.resetPasswordOtpHash = otpHash;
     user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetPasswordAttempts = 0;
     await user.save();
 
     const emailResult = await sendPasswordResetEmail(emailLower, otp, user.name);
@@ -344,7 +363,7 @@ router.post('/forgot-password', async (req, res) => {
 
 // ─── POST /api/auth/reset-password ───────────────────────────────────────────
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', authLimiter, async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) {
@@ -370,8 +389,18 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Reset code has expired. Please request a new one.' });
     }
 
+    if (user.resetPasswordAttempts >= 5) {
+      user.resetPasswordOtpHash = '';
+      user.resetPasswordOtpExpires = null;
+      user.resetPasswordAttempts = 0;
+      await user.save();
+      return res.status(400).json({ message: 'Too many failed attempts. Please request a new reset code.' });
+    }
+
     const otpHash = crypto.createHash('sha256').update(otp.trim()).digest('hex');
     if (user.resetPasswordOtpHash !== otpHash) {
+      user.resetPasswordAttempts = (user.resetPasswordAttempts || 0) + 1;
+      await user.save();
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
 
@@ -379,6 +408,7 @@ router.post('/reset-password', async (req, res) => {
     user.password = newPassword; // Will be hashed by the pre-save hook
     user.resetPasswordOtpHash = '';
     user.resetPasswordOtpExpires = null;
+    user.resetPasswordAttempts = 0;
     await user.save();
 
     res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
@@ -390,7 +420,7 @@ router.post('/reset-password', async (req, res) => {
 
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -409,7 +439,7 @@ router.post('/login', async (req, res) => {
     res.json({ token: signToken(user), user: formatUser(user) });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 

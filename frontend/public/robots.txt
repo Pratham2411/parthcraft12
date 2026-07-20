@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /requests
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /chat/
+Disallow: /admin
+Disallow: /sell
+Disallow: /profile
+Disallow: /wishlist
+
+Sitemap: https://nit-patna-market.vercel.app/sitemap.xml

@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
     // Password reset OTP
     resetPasswordOtpHash: { type: String, default: '' },
     resetPasswordOtpExpires: { type: Date, default: null },
+    resetPasswordAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

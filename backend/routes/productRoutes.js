@@ -1,6 +1,9 @@
 const router = require('express').Router();
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
+
+// Escape regex special characters to prevent ReDoS
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const { createUpload } = require('../middleware/multerUpload');
 const {
   MAX_PRODUCT_IMAGES,
@@ -25,7 +28,7 @@ router.get('/my/listings', auth, async (req, res) => {
     const products = await Product.find({ seller: req.user.id }).sort({ createdAt: -1 });
     res.json(products.map(formatProductImages));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to fetch wishlist products' });
   }
 });
 
@@ -34,7 +37,12 @@ router.get('/', async (req, res) => {
     const { search, category, minPrice, maxPrice, status, sortBy } = req.query;
     const query = { isSpam: false };
 
-    if (search) query.title = { $regex: search, $options: 'i' };
+    if (search) {
+      const safeSearch = String(search).trim().substring(0, 100);
+      if (safeSearch) {
+        query.title = { $regex: escapeRegex(safeSearch), $options: 'i' };
+      }
+    }
     if (category) query.category = category;
     query.status = status || 'available';
 
@@ -54,7 +62,7 @@ router.get('/', async (req, res) => {
 
     res.json(products.map(formatProductImages));
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to fetch products' });
   }
 });
 
@@ -65,7 +73,7 @@ router.get('/:id', async (req, res) => {
     if (product.isSpam) return res.status(404).json({ message: 'Product not found' });
     respondProduct(res, product);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to fetch product details' });
   }
 });
 
@@ -100,7 +108,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
     await product.populate('seller', 'name role avatarUrl');
     respondProduct(res, product, 201);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to create listing' });
   }
 });
 
@@ -136,7 +144,7 @@ router.put('/:id', auth, uploadImages, async (req, res) => {
     await product.populate('seller', 'name role avatarUrl');
     respondProduct(res, product);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to update listing' });
   }
 });
 
@@ -152,7 +160,7 @@ router.patch('/:id/status', auth, async (req, res) => {
     await product.populate('seller', 'name email role avatarUrl phone');
     respondProduct(res, product);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to update status' });
   }
 });
 
@@ -167,7 +175,7 @@ router.delete('/:id', auth, async (req, res) => {
     await product.deleteOne();
     res.json({ message: 'Listing deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: 'Failed to delete listing' });
   }
 });
 
