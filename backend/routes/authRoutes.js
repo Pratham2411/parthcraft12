@@ -81,7 +81,276 @@ const { uploadFile, deleteStoredImage } = require('../utils/imageStorage');
 
 const uploadAvatar = createUpload(1, 2).single('image');
 
-// ─── OTP SIGNUP FLOW ─────────────────────────────────────────────────────────
+// ─── PHONE NORMALIZATION HELPERS ──────────────────────────────────────────
+
+const normalizePhone = (phone) => {
+  if (!phone) return '';
+  let digits = String(phone).replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits;
+};
+
+const isValidPhone = (phone) => {
+  const digits = normalizePhone(phone);
+  return /^[6-9]\d{9}$/.test(digits);
+};
+
+// ─── PHONE AUTHENTICATION ROUTES ─────────────────────────────────────────────
+
+// POST /api/auth/phone-signup — Signup with Full Name + Phone Number (no password, no OTP)
+router.post('/phone-signup', authLimiter, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ message: 'Full name is required' });
+    }
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
+
+    const trimmedName = String(name).trim();
+    if (trimmedName.length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters long' });
+    }
+
+    const cleanedPhone = normalizePhone(phone);
+    if (!isValidPhone(cleanedPhone)) {
+      return res.status(400).json({
+        message: 'Please enter a valid 10-digit Indian phone number (e.g. 9876543210).'
+      });
+    }
+
+    const existingUser = await User.findOne({ phone: cleanedPhone });
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'An account with this phone number already exists. Please log in.'
+      });
+    }
+
+    const user = await User.create({
+      name: trimmedName,
+      phone: cleanedPhone,
+      role: 'user',
+      isEmailVerified: true,
+      isVerifiedStudent: true,
+      wishlist: []
+    });
+
+    return res.status(201).json({
+      token: signToken(user),
+      user: formatUser(user),
+      message: 'Account created successfully!'
+    });
+  } catch (err) {
+    if (err && err.code === 11000) {
+      return res.status(400).json({ message: 'An account with this phone number already exists.' });
+    }
+    console.error('Phone signup error:', err);
+    res.status(500).json({ message: err.message || 'Signup failed. Please try again.' });
+  }
+});
+
+// POST /api/auth/phone-login — Login with Full Name + Phone Number
+router.post('/phone-login', authLimiter, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ message: 'Full name is required' });
+    }
+
+    const cleanedPhone = normalizePhone(phone);
+    if (!isValidPhone(cleanedPhone)) {
+      return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
+    }
+
+    const user = await User.findOne({ phone: cleanedPhone });
+    if (!user) {
+      return res.status(404).json({
+        message: 'No account found with this phone number. Please check the number or sign up.'
+      });
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({ message: 'This account has been suspended.' });
+    }
+
+    const inputName = String(name).trim().toLowerCase();
+    const storedName = String(user.name || '').trim().toLowerCase();
+
+    if (inputName !== storedName) {
+      return res.status(400).json({
+        nameMismatch: true,
+        message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
+      });
+    }
+
+    return res.json({
+      token: signToken(user),
+      user: formatUser(user)
+    });
+  } catch (err) {
+    console.error('Phone login error:', err);
+    res.status(500).json({ message: 'Login failed. Please try again.' });
+  }
+});
+
+// POST /api/auth/lookup-phone — Check if phone exists (for Forgot Name)
+router.post('/lookup-phone', authLimiter, async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
+
+    const cleanedPhone = normalizePhone(phone);
+    if (!isValidPhone(cleanedPhone)) {
+      return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
+    }
+
+    const user = await User.findOne({ phone: cleanedPhone });
+    if (!user) {
+      return res.status(404).json({
+        message: 'No account found with this phone number. Please sign up.'
+      });
+    }
+
+    return res.json({
+      found: true,
+      phone: cleanedPhone,
+      currentName: user.name,
+      message: 'Account found.'
+    });
+  } catch (err) {
+    console.error('Lookup phone error:', err);
+    res.status(500).json({ message: 'Lookup failed. Please try again.' });
+  }
+});
+
+// POST /api/auth/change-name — Allows user who forgot their name to update it via phone number
+router.post('/change-name', authLimiter, async (req, res) => {
+  try {
+    const { phone, newName } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
+    if (!newName || !String(newName).trim()) {
+      return res.status(400).json({ message: 'New name is required' });
+    }
+
+    const trimmedName = String(newName).trim();
+    if (trimmedName.length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters long' });
+    }
+
+    const cleanedPhone = normalizePhone(phone);
+    const user = await User.findOne({ phone: cleanedPhone });
+    if (!user) {
+      return res.status(404).json({ message: 'No account found with this phone number.' });
+    }
+
+    user.name = trimmedName;
+    await user.save();
+
+    return res.json({
+      token: signToken(user),
+      user: formatUser(user),
+      message: 'Name updated successfully! You are now logged in.'
+    });
+  } catch (err) {
+    console.error('Change name error:', err);
+    res.status(500).json({ message: 'Failed to update name. Please try again.' });
+  }
+});
+
+// ─── POST /api/auth/login ─────────────────────────────────────────────────────
+// Supports BOTH phone auth ({ name, phone }) and admin email auth ({ email, password })
+router.post('/login', authLimiter, async (req, res) => {
+  try {
+    const { email, password, phone, name } = req.body;
+
+    // 1. Phone + Name login
+    if (phone || (!email && name)) {
+      const targetPhone = phone;
+      if (!targetPhone) {
+        return res.status(400).json({ message: 'Phone number is required' });
+      }
+      if (!name || !String(name).trim()) {
+        return res.status(400).json({ message: 'Full name is required' });
+      }
+
+      const cleanedPhone = normalizePhone(targetPhone);
+      if (!isValidPhone(cleanedPhone)) {
+        return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
+      }
+
+      const user = await User.findOne({ phone: cleanedPhone });
+      if (!user) {
+        return res.status(404).json({
+          message: 'No account found with this phone number. Please check the number or sign up.'
+        });
+      }
+
+      if (user.isBanned) {
+        return res.status(403).json({ message: 'This account has been suspended.' });
+      }
+
+      const inputName = String(name).trim().toLowerCase();
+      const storedName = String(user.name || '').trim().toLowerCase();
+
+      if (inputName !== storedName) {
+        return res.status(400).json({
+          nameMismatch: true,
+          message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
+        });
+      }
+
+      return res.json({ token: signToken(user), user: formatUser(user) });
+    }
+
+    // 2. Email + Password login (used by Admin and legacy users)
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailLower });
+    if (!user) return res.status(400).json({ message: 'Invalid email or password' });
+    if (user.isBanned) return res.status(403).json({ message: 'This account has been suspended' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
+
+    res.json({ token: signToken(user), user: formatUser(user) });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Something went wrong. Please try again.' });
+  }
+});
+
+/* ==============================================================================
+   LEGACY / PRESERVED SERVICES (Email OTP & Password Reset)
+   Preserved as requested: "dont remove the current services just comment them"
+   
+   - POST /register/send-otp
+   - POST /register/verify-otp
+   - POST /register/resend-otp
+   - POST /register (direct email+password registration)
+   - POST /forgot-password (email OTP reset code)
+   - POST /reset-password (verify OTP and update password)
+   ==============================================================================
+
+// ─── OTP SIGNUP FLOW (PRESERVED / COMMENTED) ──────────────────────────────────
 
 router.post('/register/send-otp', otpLimiter, async (req, res) => {
   try {
@@ -261,7 +530,7 @@ router.post('/register/resend-otp', otpLimiter, async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/register ─────────────────────────────────────────────────
+// ─── POST /api/auth/register (PRESERVED / COMMENTED) ─────────────────────────
 
 router.post('/register', authLimiter, async (req, res) => {
   try {
@@ -282,12 +551,10 @@ router.post('/register', authLimiter, async (req, res) => {
 
     const emailLower = email.toLowerCase().trim();
 
-    // All valid emails allowed
     if (!isAllowedSignupEmail(emailLower)) {
       return res.status(400).json({ message: 'Please enter a valid email address to sign up' });
     }
 
-    // Prevent duplicates (unique index will also protect on DB level)
     const existingUser = await User.findOne({ email: emailLower });
     if (existingUser) {
       return res.status(400).json({ message: 'An account with this email already exists' });
@@ -306,7 +573,6 @@ router.post('/register', authLimiter, async (req, res) => {
 
     return res.status(201).json({ token: signToken(user), user: formatUser(user) });
   } catch (err) {
-    // Duplicate key (unique email) handling
     if (err && err.code === 11000) {
       return res.status(400).json({ message: 'An account with this email already exists' });
     }
@@ -316,7 +582,7 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/forgot-password ──────────────────────────────────────────
+// ─── POST /api/auth/forgot-password (PRESERVED / COMMENTED) ──────────────────
 
 router.post('/forgot-password', otpLimiter, async (req, res) => {
   try {
@@ -326,7 +592,6 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
     const emailLower = email.toLowerCase().trim();
     const user = await User.findOne({ email: emailLower });
 
-    // Always return success to prevent email enumeration
     if (!user) {
       return res.status(200).json({ message: 'If an account with that email exists, a reset code has been sent.' });
     }
@@ -335,7 +600,6 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
       return res.status(200).json({ message: 'If an account with that email exists, a reset code has been sent.' });
     }
 
-    // Rate limit: max 1 OTP per 60 seconds
     if (user.resetPasswordOtpExpires && user.resetPasswordOtpHash) {
       const timeSinceIssued = Date.now() - (user.resetPasswordOtpExpires.getTime() - 10 * 60 * 1000);
       if (timeSinceIssued < 60 * 1000) {
@@ -363,7 +627,7 @@ router.post('/forgot-password', otpLimiter, async (req, res) => {
   }
 });
 
-// ─── POST /api/auth/reset-password ───────────────────────────────────────────
+// ─── POST /api/auth/reset-password (PRESERVED / COMMENTED) ───────────────────
 
 router.post('/reset-password', authLimiter, async (req, res) => {
   try {
@@ -406,8 +670,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
 
-    // OTP is valid — update password and clear reset fields
-    user.password = newPassword; // Will be hashed by the pre-save hook
+    user.password = newPassword;
     user.resetPasswordOtpHash = '';
     user.resetPasswordOtpExpires = null;
     user.resetPasswordAttempts = 0;
@@ -419,31 +682,7 @@ router.post('/reset-password', authLimiter, async (req, res) => {
     res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
-
-// ─── POST /api/auth/login ─────────────────────────────────────────────────────
-
-router.post('/login', authLimiter, async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    const emailLower = email.toLowerCase().trim();
-    const user = await User.findOne({ email: emailLower });
-    if (!user) return res.status(400).json({ message: 'Invalid email or password' });
-    if (user.isBanned) return res.status(403).json({ message: 'This account has been suspended' });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
-
-    res.json({ token: signToken(user), user: formatUser(user) });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Something went wrong. Please try again.' });
-  }
-});
+============================================================================== */
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
 

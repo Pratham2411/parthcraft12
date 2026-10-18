@@ -178,9 +178,9 @@ export default function Profile() {
               )}
             </div>
             <div className="profile-hero-copy">
-              <span className="profile-eyebrow">Student profile</span>
+              <span className="profile-eyebrow">Artisan profile</span>
               <h1>{authUser?.name || 'Your Profile'}</h1>
-              <p>{authUser?.email}</p>
+              <p>{authUser?.phone ? `📱 +91 ${authUser.phone}` : authUser?.email}</p>
             </div>
           </div>
 
@@ -226,12 +226,20 @@ export default function Profile() {
               <div className="profile-meta">
                 <div className="profile-meta-row">
                   <span className="profile-meta-label">Name</span>
-                  <span className="profile-meta-value">{authUser?.name || 'Student'}</span>
+                  <span className="profile-meta-value">{authUser?.name || 'Member'}</span>
                 </div>
-                <div className="profile-meta-row">
-                  <span className="profile-meta-label">Email</span>
-                  <span className="profile-meta-value">{authUser?.email}</span>
-                </div>
+                {authUser?.phone && (
+                  <div className="profile-meta-row">
+                    <span className="profile-meta-label">Phone</span>
+                    <span className="profile-meta-value">+91 {authUser.phone}</span>
+                  </div>
+                )}
+                {authUser?.email && (
+                  <div className="profile-meta-row">
+                    <span className="profile-meta-label">Email</span>
+                    <span className="profile-meta-value">{authUser?.email}</span>
+                  </div>
+                )}
               </div>
             </div>
 

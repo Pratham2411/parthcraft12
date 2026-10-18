@@ -89,7 +89,7 @@ export default function FeedbackSection() {
               </div>
               <div className="feedback-form-footer">
                 <p className="feedback-form-note">
-                  Sending as <strong>{user.name}</strong> ({user.email})
+                  Sending as <strong>{user.name}</strong> ({user.phone ? `+91 ${user.phone}` : user.email})
                 </p>
                 <button
                   type="submit"

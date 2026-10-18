@@ -1,4 +1,4 @@
-const CACHE_NAME = 'parthcraft12-v1';
+const CACHE_NAME = 'parthcraft12-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// Activate: clean old caches immediately and claim clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -24,7 +24,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for static assets
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -33,15 +33,30 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   if (url.origin !== self.location.origin) return;
 
-  // API calls: network first, no cache
+  // API calls: network only, bypass cache
   if (url.pathname.startsWith('/api/')) return;
 
-  // Static assets: cache first, then network
+  // Navigation requests (HTML pages): NETWORK FIRST so updates are instant
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+    );
+    return;
+  }
+
+  // Static hashed assets: cache first, then network fallback
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request).then((response) => {
-        // Don't cache opaque responses or errors
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
@@ -49,11 +64,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         return response;
       });
-    }).catch(() => {
-      // Offline fallback for navigation requests
-      if (request.mode === 'navigate') {
-        return caches.match('/');
-      }
     })
   );
 });

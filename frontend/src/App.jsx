@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import BottomNav from './components/BottomNav';
@@ -27,34 +28,36 @@ import Chat from './pages/Chat';
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/community/post/:id" element={<PostDetail />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/community/post/:id" element={<PostDetail />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Protected routes */}
-          <Route path="/community/new" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
-          <Route path="/order/:productId" element={<ProtectedRoute><OrderFlow /></ProtectedRoute>} />
-          <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
-          <Route path="/messages" element={<ProtectedRoute><Conversations /></ProtectedRoute>} />
-          <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+            {/* Protected routes */}
+            <Route path="/community/new" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
+            <Route path="/order/:productId" element={<ProtectedRoute><OrderFlow /></ProtectedRoute>} />
+            <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/bookmarks" element={<ProtectedRoute><Bookmarks /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Conversations /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
-          {/* Admin */}
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        </Routes>
-        <Footer />
-        <BottomNav />
-      </AuthProvider>
+            {/* Admin */}
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          </Routes>
+          <Footer />
+          <BottomNav />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
