@@ -59,6 +59,7 @@ const allowedOrigins = new Set([
   'http://localhost:3000',
   'http://localhost:5173',
 ]);
+
 if (process.env.FRONTEND_URL) {
   const cleanFront = process.env.FRONTEND_URL.trim().replace(/\/$/, '');
   allowedOrigins.add(cleanFront);
@@ -69,12 +70,15 @@ app.use(cors({
     if (!origin) return callback(null, true);
     const cleanOrigin = origin.replace(/\/$/, '');
     if (allowedOrigins.has(cleanOrigin)) return callback(null, origin);
-    // Allow Vercel preview deploys for parthcraft12
-    if (/^https:\/\/parthcraft12[\w-]*\.vercel\.app$/.test(cleanOrigin)) return callback(null, origin);
+    // Allow any Vercel domain (*.vercel.app)
+    if (/\.vercel\.app$/.test(cleanOrigin)) return callback(null, origin);
     if (origin.startsWith('http://localhost:')) return callback(null, origin);
     callback(null, false);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200,
 }));
 
 // ─── Body Parsers (with size limits) ────────────────────────────────────────
@@ -98,7 +102,11 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 
 app.get('/', (req, res) =>
-  res.json({ message: '🎨 ParthCraft12 API is running' })
+  res.json({ message: '🎨 ParthCraft12 API is running', status: 'ok' })
+);
+
+app.get(['/health', '/healthz'], (req, res) =>
+  res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: new Date() })
 );
 
 // 404 handler

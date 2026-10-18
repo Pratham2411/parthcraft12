@@ -199,6 +199,11 @@ export default function Register() {
                 'Create Account'
               )}
             </button>
+            {loading && (
+              <p style={{ fontSize: '0.78rem', color: '#888', marginTop: '10px', textAlign: 'center' }}>
+                ⏳ Connecting to server (free tier servers may take ~30–45s to wake up on first request)...
+              </p>
+            )}
           </form>
         ) : (
           <div className="otp-screen">
