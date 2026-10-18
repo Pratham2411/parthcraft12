@@ -170,28 +170,26 @@ async function seed() {
 
   // 1. Create or update admin user
   const adminEmail = (process.env.ADMIN_EMAILS || 'prathamraj2411@gmail.com').split(',')[0].trim();
-  const salt = await bcrypt.genSalt(10);
-  const passwordHash = await bcrypt.hash('230459', salt);
+  const plainPassword = '230459';
 
   let admin = await User.findOne({ email: adminEmail });
   if (!admin) {
-    admin = await User.create({
+    admin = new User({
       name: 'Pratham Raj',
       displayName: 'ParthCraft12',
       email: adminEmail,
-      password: passwordHash,
+      password: plainPassword,
       role: 'admin',
-      isVerified: true,
       isEmailVerified: true,
       bio: 'Creator & Artist at ParthCraft12. Sharing handmade craft ideas, paper origami, and art tutorials on YouTube.'
     });
+    await admin.save();
     console.log(`✅ Admin user created: ${adminEmail} (password: 230459)`);
   } else {
     admin.name = 'Pratham Raj';
     admin.displayName = 'ParthCraft12';
-    admin.password = passwordHash;
+    admin.password = plainPassword;
     admin.role = 'admin';
-    admin.isVerified = true;
     admin.isEmailVerified = true;
     await admin.save();
     console.log(`✅ Updated existing admin user: ${adminEmail} with password: 230459 and role: admin`);
