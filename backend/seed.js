@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -162,29 +165,36 @@ async function seed() {
   }
 
   console.log('Connecting to MongoDB...');
-  await mongoose.connect(uri);
+  await mongoose.connect(uri, { dbName: 'parthcraft12' });
   console.log('Connected! Seeding initial data...');
 
   // 1. Create or update admin user
   const adminEmail = (process.env.ADMIN_EMAILS || 'prathamraj2411@gmail.com').split(',')[0].trim();
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash('230459', salt);
+
   let admin = await User.findOne({ email: adminEmail });
   if (!admin) {
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('ParthCraft@2026', salt);
     admin = await User.create({
-      name: 'ParthCraft12 Admin',
+      name: 'Pratham Raj',
       displayName: 'ParthCraft12',
       email: adminEmail,
       password: passwordHash,
       role: 'admin',
       isVerified: true,
+      isEmailVerified: true,
       bio: 'Creator & Artist at ParthCraft12. Sharing handmade craft ideas, paper origami, and art tutorials on YouTube.'
     });
-    console.log(`✅ Admin user created: ${adminEmail} (password: ParthCraft@2026)`);
+    console.log(`✅ Admin user created: ${adminEmail} (password: 230459)`);
   } else {
+    admin.name = 'Pratham Raj';
+    admin.displayName = 'ParthCraft12';
+    admin.password = passwordHash;
     admin.role = 'admin';
+    admin.isVerified = true;
+    admin.isEmailVerified = true;
     await admin.save();
-    console.log(`✅ Verified admin user: ${adminEmail}`);
+    console.log(`✅ Updated existing admin user: ${adminEmail} with password: 230459 and role: admin`);
   }
 
   // 2. Site settings

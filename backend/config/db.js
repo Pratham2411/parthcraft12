@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const connectDB = async () => {
   if (!process.env.MONGO_URI) {
@@ -11,8 +13,8 @@ const connectDB = async () => {
   }
 
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    const conn = await mongoose.connect(process.env.MONGO_URI, { dbName: 'parthcraft12' });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host} (Database: ${conn.connection.name})`);
   } catch (err) {
     console.error(`❌ MongoDB Error: ${err.message}`);
     process.exit(1);
