@@ -41,21 +41,21 @@ const sendOtpEmail = async (toEmail, otp, name) => {
     const { error } = await resend.emails.send({
       from: fromEmail,
       to: toEmail,
-      subject: 'Verify your Campus Market Account',
+      subject: '🎨 Verify your ParthCraft12 Account',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
-          <h2 style="color: #7c3aed; text-align: center;">Campus Market Verification</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eaeaea; border-radius: 12px; background: #ffffff;">
+          <h2 style="color: #C65B3D; text-align: center; margin-bottom: 8px;">🎨 ParthCraft12 Verification</h2>
           <p>Hi ${safeName},</p>
-          <p>Thank you for signing up for Campus Market! Please use the verification code below to complete your registration:</p>
+          <p>Thank you for joining <strong>ParthCraft12</strong>! Please use the verification code below to complete your registration:</p>
           
-          <div style="background-color: #f4f4f5; padding: 20px; text-align: center; border-radius: 8px; margin: 24px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1e293b;">${otp}</span>
+          <div style="background-color: #F6F0E4; padding: 20px; text-align: center; border-radius: 8px; margin: 24px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2C221E;">${otp}</span>
           </div>
           
           <p>This code will expire in <strong>10 minutes</strong>. Do not share this code with anyone.</p>
-          <p>If you didn't request this, you can safely ignore this email.</p>
+          <p style="color: #64748b; font-size: 13px;">If you didn't request this, you can safely ignore this email.</p>
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b; text-align: center;">Campus Market Team</p>
+          <p style="font-size: 12px; color: #64748b; text-align: center;">ParthCraft12 — Handmade Art & Craft Community</p>
         </div>
       `,
     });
@@ -182,21 +182,21 @@ const sendPasswordResetEmail = async (toEmail, otp, name) => {
     const { error } = await resend.emails.send({
       from: fromEmail,
       to: toEmail,
-      subject: 'Reset your Campus Market Password',
+      subject: '🔑 Reset your ParthCraft12 Password',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
-          <h2 style="color: #7c3aed; text-align: center;">Password Reset</h2>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #eaeaea; border-radius: 12px; background: #ffffff;">
+          <h2 style="color: #C65B3D; text-align: center; margin-bottom: 8px;">🔑 Password Reset</h2>
           <p>Hi ${safeName},</p>
-          <p>We received a request to reset your Campus Market password. Use the code below to set a new password:</p>
+          <p>We received a request to reset your <strong>ParthCraft12</strong> password. Use the verification code below to set a new password:</p>
           
-          <div style="background-color: #f4f4f5; padding: 20px; text-align: center; border-radius: 8px; margin: 24px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1e293b;">${otp}</span>
+          <div style="background-color: #F6F0E4; padding: 20px; text-align: center; border-radius: 8px; margin: 24px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2C221E;">${otp}</span>
           </div>
           
           <p>This code will expire in <strong>10 minutes</strong>. Do not share this code with anyone.</p>
-          <p>If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+          <p style="color: #64748b; font-size: 13px;">If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b; text-align: center;">Campus Market Team</p>
+          <p style="font-size: 12px; color: #64748b; text-align: center;">ParthCraft12 — Handmade Art & Craft Community</p>
         </div>
       `,
     });
