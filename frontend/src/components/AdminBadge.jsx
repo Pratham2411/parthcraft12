@@ -1,3 +1,3 @@
 export default function AdminBadge() {
-  return <span className="badge badge-admin">Admin</span>;
+  return <span className="admin-badge">Admin</span>;
 }

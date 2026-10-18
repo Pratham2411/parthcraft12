@@ -43,7 +43,7 @@ export default function FeedbackSection() {
             Share your <span className="gradient">feedback</span>
           </h2>
           <p className="feedback-subtitle">
-            Report bugs, suggest features, or tell us how we can improve NIT Patna Market.
+            Report bugs, suggest features, or tell us how we can improve ParthCraft12.
             Your message goes directly to our admin team.
           </p>
         </div>

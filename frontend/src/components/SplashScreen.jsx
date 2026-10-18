@@ -31,19 +31,18 @@ export default function SplashScreen({ onFinish }) {
 
       {/* Center content */}
       <div className="splash-content">
-        {/* NIT Patna Emblem */}
+        {/* ParthCraft12 Logo */}
         <div className="splash-logo">
-          <img src="/nitp-logo.png" alt="NIT Patna Logo" className="splash-logo-svg" style={{ objectFit: 'contain' }} />
+          <img src="/icon-192.png" alt="ParthCraft12 Logo" className="splash-logo-svg" style={{ objectFit: 'cover', borderRadius: '16px' }} />
           <div className="splash-logo-ring" />
           <div className="splash-logo-ring splash-logo-ring-2" />
         </div>
 
         {/* Text */}
         <h1 className="splash-title">
-          <span className="splash-title-nit">NIT Patna</span>
-          <span className="splash-title-market">Marketplace</span>
+          <span className="splash-title-nit">ParthCraft12</span>
         </h1>
-        <div className="splash-tagline">Buy & Sell Within Your Campus</div>
+        <div className="splash-tagline">Handmade Art & Craft Community</div>
       </div>
     </div>
   );

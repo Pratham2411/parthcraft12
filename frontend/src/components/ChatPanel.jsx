@@ -209,10 +209,10 @@ export default function ChatPanel({
             <a
               href={`https://wa.me/${otherUser.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
                 product
-                  ? `Hi ${otherUser.name}, I saw your listing for "${product.title}" on NITP Market. Is it still available?`
+                  ? `Hi ${otherUser.name}, I saw your listing for "${product.title}" on ParthCraft12. Is it still available?`
                   : itemRequest
-                    ? `Hi ${otherUser.name}, I'm contacting you about the request for "${itemRequest.title}" on NITP Market.`
-                    : `Hi ${otherUser.name}, I'm contacting you from NITP Market.`
+                    ? `Hi ${otherUser.name}, I'm contacting you about the request for "${itemRequest.title}" on ParthCraft12.`
+                    : `Hi ${otherUser.name}, I'm contacting you from ParthCraft12.`
               )}`}
               target="_blank"
               rel="noopener noreferrer"

@@ -1,142 +1,136 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ProductCard from '../components/ProductCard';
-import FeedbackSection from '../components/feedback/FeedbackSection';
 import api from '../api/axios';
-
-const CATEGORIES = ['All', 'Books', 'Electronics', 'Clothing', 'Furniture', 'Stationery', 'Sports', 'Other'];
+import ProductCard from '../components/ProductCard';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
-  const [products, setProducts] = useState([]);
+  const [featured, setFeatured] = useState([]);
+  const [communityPosts, setCommunityPosts] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
-  const [search, setSearch]     = useState('');
-  const [category, setCategory] = useState('All');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [sortBy, setSortBy]     = useState('newest');
-
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (search)              params.search   = search;
-      if (category !== 'All') params.category = category;
-      if (minPrice)           params.minPrice  = minPrice;
-      if (maxPrice)           params.maxPrice  = maxPrice;
-      if (sortBy)             params.sortBy    = sortBy;
-
-      const { data } = await api.get('/products', { params });
-      setProducts(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, category, minPrice, maxPrice, sortBy]);
 
   useEffect(() => {
-    const t = setTimeout(fetchProducts, 350);
-    return () => clearTimeout(t);
-  }, [fetchProducts]);
+    const load = async () => {
+      try {
+        const [prodRes, commRes, settRes] = await Promise.allSettled([
+          api.get('/products', { params: { sortBy: 'newest', limit: 8 } }),
+          api.get('/community', { params: { limit: 6 } }),
+          api.get('/settings'),
+        ]);
+        if (prodRes.status === 'fulfilled') setFeatured(prodRes.value.data?.slice?.(0, 8) || prodRes.value.data || []);
+        if (commRes.status === 'fulfilled') setCommunityPosts(commRes.value.data?.posts || []);
+        if (settRes.status === 'fulfilled') setSettings(settRes.value.data || {});
+      } catch (e) { console.error(e); }
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   return (
     <main className="page-content">
       <div className="container">
         {/* Hero */}
         <section className="hero">
-          <div className="hero-eyebrow">🏛️ NIT Patna Student Marketplace</div>
+          <div className="hero-eyebrow">🎨 Handmade Art & Craft</div>
           <h1 className="hero-title">
-            Buy &amp; Sell<br />
-            <span className="gradient">Within Your Campus</span>
+            Creative Crafts<br />
+            <span className="clay">Made With Love</span>
           </h1>
           <p className="hero-subtitle">
-            The trusted marketplace for NIT Patna students. Find great deals on textbooks,
-            electronics, and more — all from your campus community.
+            Discover unique handmade creations, share your own artwork with the community, 
+            and shop one-of-a-kind craft products by ParthCraft12.
           </p>
           <div className="hero-cta">
-            {isAuthenticated ? (
-              <Link to="/sell" className="btn btn-primary btn-lg">+ List an Item</Link>
-            ) : (
-              <Link to="/register" className="btn btn-primary btn-lg">Get Started Free</Link>
+            <Link to="/shop" className="btn btn-primary btn-lg">🛍️ Browse Shop</Link>
+            <Link to="/community" className="btn btn-secondary btn-lg">🎨 Explore Community</Link>
+            {!isAuthenticated && (
+              <Link to="/register" className="btn btn-accent btn-lg">✨ Join Free</Link>
             )}
-            <a href="#listings" className="btn btn-secondary btn-lg">Browse Listings</a>
-            <a href="#feedback" className="btn btn-secondary btn-lg">Give Feedback</a>
           </div>
         </section>
 
-        {/* Filters */}
-        <div id="listings" className="filters-bar">
-          <div className="search-wrap">
-            <span className="search-icon">🔍</span>
-            <input
-              id="search-input"
-              className="form-input"
-              placeholder="Search listings..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {/* Featured Products */}
+        {!loading && featured.length > 0 && (
+          <section className="section">
+            <div className="section-header">
+              <div>
+                <h2 className="section-title">✨ From the Shop</h2>
+                <p className="section-subtitle">Handmade creations you can own</p>
+              </div>
+              <Link to="/shop" className="btn btn-secondary btn-sm">View All →</Link>
+            </div>
+            <div className="product-grid">
+              {featured.map((p) => <ProductCard key={p._id} product={p} />)}
+            </div>
+          </section>
+        )}
+
+        {/* Community Highlights */}
+        {!loading && communityPosts.length > 0 && (
+          <section className="section">
+            <div className="section-header">
+              <div>
+                <h2 className="section-title">🎨 Community Creations</h2>
+                <p className="section-subtitle">Inspiration from fellow craft lovers</p>
+              </div>
+              <Link to="/community" className="btn btn-secondary btn-sm">See All →</Link>
+            </div>
+            <div className="community-grid">
+              {communityPosts.slice(0, 6).map((post) => (
+                <Link to={`/community/post/${post._id}`} key={post._id} className="community-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="community-card-image">
+                    <img 
+                      src={post.type === 'youtube' ? post.youtubeThumbnail : post.imageUrls?.[0]} 
+                      alt={post.title} 
+                      loading="lazy" 
+                    />
+                  </div>
+                  <div className="community-card-body">
+                    <div className="community-card-title">{post.title}</div>
+                    <div className="community-card-caption">{post.caption}</div>
+                    <div className="community-card-actions">
+                      <span className="action-btn">❤️ {post.likeCount || 0}</span>
+                      <span className="action-btn">💬 {post.commentCount || 0}</span>
+                      <span style={{ marginLeft: 'auto' }} className="badge badge-sage">{post.category}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* YouTube Channel CTA */}
+        <section className="section" style={{ textAlign: 'center' }}>
+          <div style={{ 
+            background: 'var(--marigold-light)', 
+            borderRadius: 'var(--radius-xl)', 
+            padding: '48px 32px',
+            maxWidth: 700,
+            margin: '0 auto'
+          }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: 12 }}>📺 Watch on YouTube</h2>
+            <p style={{ color: 'var(--text-light)', marginBottom: 24 }}>
+              Tutorials, time-lapses, and behind-the-scenes of every creation. 
+              Subscribe to ParthCraft12 on YouTube!
+            </p>
+            <a 
+              href={settings.youtubeChannelUrl || 'https://www.youtube.com/@parthcraft12'} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="btn btn-primary btn-lg"
+            >
+              ▶️ Visit Channel
+            </a>
           </div>
+        </section>
 
-          <select
-            id="category-filter"
-            className="form-select filter-select"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-          </select>
-
-          <select
-            className="form-select filter-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="newest">Newest First</option>
-            <option value="lowest">Price: Low to High</option>
-            <option value="highest">Price: High to Low</option>
-          </select>
-
-          <input
-            id="min-price"
-            className="form-input filter-select"
-            placeholder="Min ₹"
-            type="number"
-            min="0"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            style={{ maxWidth: 110 }}
-          />
-          <input
-            id="max-price"
-            className="form-input filter-select"
-            placeholder="Max ₹"
-            type="number"
-            min="0"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            style={{ maxWidth: 110 }}
-          />
-        </div>
-
-        {/* Listings */}
-        {loading ? (
+        {loading && (
           <div className="loader-page"><div className="spinner" /></div>
-        ) : products.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📦</div>
-            <h3>No listings found</h3>
-            <p>Try adjusting your search or filters</p>
-          </div>
-        ) : (
-          <div className="product-grid">
-            {products.map((p) => <ProductCard key={p._id} product={p} />)}
-          </div>
         )}
       </div>
-
-      <FeedbackSection />
     </main>
   );
 }

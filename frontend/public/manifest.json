@@ -1,23 +1,30 @@
 {
-  "short_name": "NITP Market",
-  "name": "NIT Patna Student Marketplace",
-  "description": "The official student marketplace for NIT Patna. Buy and sell textbooks, electronics, furniture, and more within your campus community.",
-  "categories": ["shopping", "education", "social"],
+  "short_name": "ParthCraft12",
+  "name": "ParthCraft12 — Handmade Art & Craft",
+  "description": "Discover handmade art, join the craft community, and shop unique creations by ParthCraft12.",
+  "categories": ["shopping", "lifestyle", "social"],
   "icons": [
     {
-      "src": "/nitp-logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/nitp-logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#0a0e1a",
-  "background_color": "#0a0e1a"
+  "orientation": "portrait-primary",
+  "theme_color": "#F6F0E4",
+  "background_color": "#F6F0E4"
 }
-

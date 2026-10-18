@@ -122,10 +122,10 @@ export default function Register() {
       <div className="auth-card">
         <div className="auth-card-header">
           <div className="auth-logo">
-            <img src="/nitp-logo.png" alt="NIT Patna Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/icon-192.png" alt="ParthCraft12 Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
           </div>
-          <h1>Join NIT Patna Marketplace</h1>
-          <p>Register with your college email to start trading</p>
+          <h1>Join ParthCraft12</h1>
+          <p>Create your account to share crafts, save favorites, and shop</p>
         </div>
 
         {step === 'form' ? (
@@ -155,7 +155,7 @@ export default function Register() {
                 className="form-input"
                 type="email"
                 name="email"
-                placeholder="you@nitp.ac.in"
+                placeholder="you@example.com"
                 value={form.email}
                 onChange={handleChange}
                 required

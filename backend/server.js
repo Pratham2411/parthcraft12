@@ -28,7 +28,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com", "https://img.youtube.com", "https://i.ytimg.com"],
       connectSrc: ["'self'", process.env.FRONTEND_URL || 'http://localhost:3000'],
     },
   },
@@ -54,19 +54,23 @@ app.use(hpp());
 
 // ─── CORS ───────────────────────────────────────────────────────────────────
 const allowedOrigins = new Set([
-  'https://nit-patna-market.vercel.app',
-  'https://www.nit-patna-market.vercel.app',
+  'https://parthcraft12.vercel.app',
+  'https://www.parthcraft12.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173',
 ]);
-if (process.env.FRONTEND_URL) allowedOrigins.add(process.env.FRONTEND_URL);
+if (process.env.FRONTEND_URL) {
+  const cleanFront = process.env.FRONTEND_URL.trim().replace(/\/$/, '');
+  allowedOrigins.add(cleanFront);
+}
 
 app.use(cors({
   origin(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.has(origin)) return callback(null, origin);
-    // Only allow YOUR Vercel preview deploys (nit-patna-market-*), not all *.vercel.app
-    if (/^https:\/\/nit-patna-market[\w-]*\.vercel\.app$/.test(origin)) return callback(null, origin);
+    const cleanOrigin = origin.replace(/\/$/, '');
+    if (allowedOrigins.has(cleanOrigin)) return callback(null, origin);
+    // Allow Vercel preview deploys for parthcraft12
+    if (/^https:\/\/parthcraft12[\w-]*\.vercel\.app$/.test(cleanOrigin)) return callback(null, origin);
     if (origin.startsWith('http://localhost:')) return callback(null, origin);
     callback(null, false);
   },
@@ -89,9 +93,12 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/announcements', require('./routes/announcementRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
+app.use('/api/community', require('./routes/communityRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 app.get('/', (req, res) =>
-  res.json({ message: '🎓 College Marketplace API is running' })
+  res.json({ message: '🎨 ParthCraft12 API is running' })
 );
 
 // 404 handler

@@ -1,17 +1,21 @@
 import { useNavigate } from 'react-router-dom';
-import { mediaUrl } from '../utils/mediaUrl';
-import { getPrimaryProductImage, resolveProductImageSrc, handleProductImageError } from '../utils/productImage';
+import { resolveProductImageSrc, getPrimaryProductImage, handleProductImageError } from '../utils/productImage';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 const CATEGORY_COLORS = {
-  Books:       'badge-blue',
-  Electronics: 'badge-violet',
-  Clothing:    'badge-green',
-  Furniture:   'badge-yellow',
-  Stationery:  'badge-gray',
-  Sports:      'badge-green',
-  Other:       'badge-gray',
+  Paintings:       'badge-clay',
+  Drawings:        'badge-sage',
+  Origami:         'badge-marigold',
+  'Handmade Cards': 'badge-blush',
+  Crochet:         'badge-violet',
+  Knitting:        'badge-blue',
+  Pottery:         'badge-sage',
+  Calligraphy:     'badge-marigold',
+  'Home Decor':    'badge-clay',
+  Jewelry:         'badge-blush',
+  'Gift Items':    'badge-marigold',
+  Other:           'badge-gray',
 };
 
 export default function ProductCard({ product }) {
@@ -26,7 +30,6 @@ export default function ProductCard({ product }) {
     if (!isAuthenticated) return navigate('/login');
     try {
       const isAdding = !inWishlist;
-      // Optimistic update
       const newWishlist = isAdding 
         ? [...(user.wishlist || []), product._id]
         : (user.wishlist || []).filter(id => id !== product._id);
@@ -56,6 +59,7 @@ export default function ProductCard({ product }) {
           <span className={`badge ${CATEGORY_COLORS[product.category] || 'badge-gray'}`}>
             {product.category}
           </span>
+          {product.madeToOrder && <span className="badge badge-marigold">Made to Order</span>}
         </div>
         <button 
           className="wishlist-btn" 
@@ -73,16 +77,6 @@ export default function ProductCard({ product }) {
       <div className="card-body">
         <div className="card-title">{product.title}</div>
         <div className="card-price">₹{Number(product.price).toLocaleString('en-IN')}</div>
-        <div className="card-meta card-seller">
-          <span className="user-avatar user-avatar-xs" aria-hidden="true">
-            {product.seller?.avatarUrl ? (
-              <img src={mediaUrl(product.seller.avatarUrl)} alt="" />
-            ) : (
-              <span>{sellerInitial}</span>
-            )}
-          </span>
-          <span>{product.seller?.name || 'Unknown'}</span>
-        </div>
       </div>
     </div>
   );

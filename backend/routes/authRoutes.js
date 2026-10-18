@@ -43,8 +43,6 @@ const profileLimiter = rateLimit({
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-const NITP_DOMAIN = '@nitp.ac.in';
-
 const isValidEmail = (email) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
 
@@ -58,9 +56,8 @@ const isStrongPassword = (password) => {
 };
 
 const isAllowedSignupEmail = (emailLower) => {
-  // Admin accounts can sign up with their configured emails.
-  if (isAdminEmail(emailLower)) return true;
-  return emailLower.endsWith(NITP_DOMAIN);
+  // All valid emails are allowed for the craft community
+  return true;
 };
 
 const signToken = (user) => {
@@ -105,7 +102,7 @@ router.post('/register/send-otp', otpLimiter, async (req, res) => {
     const emailLower = email.toLowerCase().trim();
 
     if (!isAllowedSignupEmail(emailLower)) {
-      return res.status(400).json({ message: `Use your ${NITP_DOMAIN} email to sign up` });
+      return res.status(400).json({ message: 'Please enter a valid email address to sign up' });
     }
 
     const existingUser = await User.findOne({ email: emailLower });
@@ -204,7 +201,7 @@ router.post('/register/verify-otp', authLimiter, async (req, res) => {
         emailVerificationExpires: null,
         phone: '',
         avatarUrl: '',
-        isVerifiedStudent: emailLower.endsWith(NITP_DOMAIN),
+        isVerifiedStudent: true,
         wishlist: [],
         createdAt: new Date(),
         updatedAt: new Date()
@@ -285,11 +282,9 @@ router.post('/register', authLimiter, async (req, res) => {
 
     const emailLower = email.toLowerCase().trim();
 
-    // Email/domain restriction for signup:
-    // - allowed: @nitp.ac.in
-    // - exception: the 3 admin emails configured in backend/config/admins.js
+    // All valid emails allowed
     if (!isAllowedSignupEmail(emailLower)) {
-      return res.status(400).json({ message: `Use your ${NITP_DOMAIN} email to sign up` });
+      return res.status(400).json({ message: 'Please enter a valid email address to sign up' });
     }
 
     // Prevent duplicates (unique index will also protect on DB level)
@@ -302,11 +297,10 @@ router.post('/register', authLimiter, async (req, res) => {
       name: String(name).trim(),
       email: emailLower,
       password,
-      // Email verification removed: consider signup as immediately active.
       isEmailVerified: true,
       emailVerificationTokenHash: '',
       emailVerificationExpires: null,
-      isVerifiedStudent: emailLower.endsWith(NITP_DOMAIN),
+      isVerifiedStudent: true,
       wishlist: []
     });
 
@@ -470,7 +464,7 @@ router.patch('/me', auth, profileLimiter, uploadAvatar, async (req, res) => {
     const user = req.userDoc;
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    const { phone, removeAvatar } = req.body;
+    const { phone, removeAvatar, bio, displayName } = req.body;
 
     if (typeof phone === 'string') {
       const cleaned = phone.replace(/[\s-]/g, '');
@@ -479,6 +473,9 @@ router.patch('/me', auth, profileLimiter, uploadAvatar, async (req, res) => {
       }
       user.phone = cleaned;
     }
+
+    if (typeof bio === 'string') user.bio = bio.trim().slice(0, 500);
+    if (typeof displayName === 'string') user.displayName = displayName.trim().slice(0, 100);
 
     const shouldRemoveAvatar =
       removeAvatar === true ||

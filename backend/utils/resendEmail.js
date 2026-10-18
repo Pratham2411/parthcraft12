@@ -104,7 +104,7 @@ const sendNewMessageEmail = async (toEmail, recipientName, senderName, productNa
           
           <p>If you have any questions, feel free to reply directly to them on the platform.</p>
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b; text-align: center;">NIT Patna Marketplace</p>
+          <p style="font-size: 12px; color: #64748b; text-align: center;">ParthCraft12 — Handmade Art & Craft</p>
         </div>
       `,
     });
@@ -141,14 +141,14 @@ const sendRequestOfferEmail = async (toEmail, recipientName, senderName, request
           <h2 style="color: #1e293b;">Someone can help with your request</h2>
           <p>Hi ${safeName},</p>
           <p><strong>${safeSender}</strong> clicked <strong>I have this</strong> for your request: <strong>${safeRequest}</strong>.</p>
-          <p>A conversation has been created in your inbox so you can continue safely on NITP Market.</p>
+          <p>A conversation has been created in your inbox so you can continue safely on ParthCraft12.</p>
 
           <div style="margin: 30px 0;">
-            <a href="${inboxUrl}" style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Open Inbox</a>
+            <a href="${inboxUrl}" style="background-color: #C65B3D; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Open Inbox</a>
           </div>
 
           <hr style="border: none; border-top: 1px solid #eaeaea; margin: 24px 0;" />
-          <p style="font-size: 12px; color: #64748b; text-align: center;">NIT Patna Marketplace</p>
+          <p style="font-size: 12px; color: #64748b; text-align: center;">ParthCraft12 — Handmade Art & Craft</p>
         </div>
       `,
     });
