@@ -104,28 +104,8 @@ export default function Home() {
 
         {/* Meet the Creator Section */}
         <section className="section">
-          <div style={{
-            background: 'var(--bg-elevated)',
-            border: '1.5px solid var(--border-light)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '36px 32px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '32px',
-            flexWrap: 'wrap',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
-            <div style={{
-              width: 140,
-              height: 140,
-              borderRadius: 'var(--radius-xl)',
-              overflow: 'hidden',
-              border: '3px solid var(--clay)',
-              flexShrink: 0,
-              margin: '0 auto',
-              background: 'var(--paper-dark)',
-              boxShadow: '0 8px 20px rgba(198,91,61,0.2)'
-            }}>
+          <div className="creator-spotlight-card">
+            <div className="creator-spotlight-avatar-wrap">
               <img
                 src={settings.creatorAvatarUrl || '/images/owner.png'}
                 alt={settings.creatorName || 'Parth'}
@@ -157,7 +137,7 @@ export default function Home() {
               <p style={{ color: 'var(--text-light)', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 0 16px' }}>
                 {settings.creatorBio || 'Every piece is folded, painted, or crafted by hand with creativity and love. Check out the story or watch how crafts are made!'}
               </p>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="creator-spotlight-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Link to="/about" className="btn btn-secondary btn-sm">
                   📖 Read Creator Story
                 </Link>

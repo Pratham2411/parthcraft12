@@ -115,32 +115,57 @@ export default function Navbar() {
           </button>
         </div>
 
-        <Link to="/" className="mobile-nav-link" onClick={closeMobile}>🏠 Home</Link>
-        <Link to="/shop" className="mobile-nav-link" onClick={closeMobile}>🛍️ Shop</Link>
-        <Link to="/community" className="mobile-nav-link" onClick={closeMobile}>🎨 Community</Link>
-        <Link to="/about" className="mobile-nav-link" onClick={closeMobile}>✨ About</Link>
-
-        {user ? (
-          <>
-            <Link to="/profile" className="mobile-nav-link" onClick={closeMobile}>👤 Profile</Link>
-            <Link to="/my-orders" className="mobile-nav-link" onClick={closeMobile}>📦 My Orders</Link>
-            <Link to="/bookmarks" className="mobile-nav-link" onClick={closeMobile}>🔖 Bookmarks</Link>
-            <Link to="/community/new" className="mobile-nav-link" onClick={closeMobile}>➕ Share Creation</Link>
-            {isAdmin && (
-              <Link to="/admin" className="mobile-nav-link" onClick={closeMobile}>⚙️ Admin Studio</Link>
-            )}
-            <button type="button" className="mobile-nav-link" onClick={handleLogout}>🚪 Logout</button>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="mobile-nav-link" onClick={closeMobile}>🔑 Login</Link>
-            <Link to="/register" className="mobile-nav-link" onClick={closeMobile}>✨ Join Free</Link>
-          </>
+        {user && (
+          <div className="mobile-drawer-user-card">
+            <div className="mobile-drawer-avatar">
+              {user.avatarUrl ? (
+                <img src={mediaUrl(user.avatarUrl)} alt="" />
+              ) : (
+                <span>{user.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+              )}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="mobile-drawer-user-name">{user.displayName || user.name}</div>
+              <div className="mobile-drawer-user-sub">
+                {isAdmin ? <span className="admin-badge">👑 Admin</span> : (user.phone ? `📱 +91 ${user.phone}` : '✨ Artisan Member')}
+              </div>
+            </div>
+          </div>
         )}
 
-        <button type="button" className="mobile-nav-link" onClick={toggleTheme}>
-          {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
-        </button>
+        <div className="mobile-drawer-links">
+          <Link to="/" className={`mobile-nav-link${isActive('/')}`} onClick={closeMobile}>🏠 Home</Link>
+          <Link to="/shop" className={`mobile-nav-link${isActive('/shop')}`} onClick={closeMobile}>🛍️ Shop</Link>
+          <Link to="/community" className={`mobile-nav-link${isActive('/community')}`} onClick={closeMobile}>🎨 Community</Link>
+          <Link to="/about" className={`mobile-nav-link${isActive('/about')}`} onClick={closeMobile}>✨ About Creator</Link>
+
+          {user ? (
+            <>
+              <div className="mobile-drawer-divider" />
+              <Link to="/profile" className={`mobile-nav-link${isActive('/profile')}`} onClick={closeMobile}>👤 My Profile</Link>
+              <Link to="/my-orders" className={`mobile-nav-link${isActive('/my-orders')}`} onClick={closeMobile}>📦 My Orders</Link>
+              <Link to="/bookmarks" className={`mobile-nav-link${isActive('/bookmarks')}`} onClick={closeMobile}>🔖 Saved Crafts</Link>
+              <Link to="/community/new" className={`mobile-nav-link${isActive('/community/new')}`} onClick={closeMobile}>➕ Share a Craft</Link>
+              {isAdmin && (
+                <Link to="/admin" className={`mobile-nav-link mobile-nav-admin${location.pathname.startsWith('/admin') ? ' active' : ''}`} onClick={closeMobile}>
+                  ⚙️ Admin Studio
+                </Link>
+              )}
+              <button type="button" className="mobile-nav-link mobile-nav-logout" onClick={handleLogout}>🚪 Logout</button>
+            </>
+          ) : (
+            <>
+              <div className="mobile-drawer-divider" />
+              <Link to="/login" className={`mobile-nav-link${isActive('/login')}`} onClick={closeMobile}>🔑 Login</Link>
+              <Link to="/register" className={`mobile-nav-link${isActive('/register')}`} onClick={closeMobile}>✨ Join Free</Link>
+            </>
+          )}
+
+          <div className="mobile-drawer-divider" />
+          <button type="button" className="mobile-nav-link mobile-theme-toggle" onClick={toggleTheme}>
+            {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
+          </button>
+        </div>
       </div>
     </>
   );

@@ -1120,21 +1120,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Action Save Bar */}
-                <div style={{
-                  position: 'sticky',
-                  bottom: 16,
-                  background: 'var(--bg-elevated)',
-                  border: '1.5px solid var(--border-light)',
-                  padding: '16px 24px',
-                  borderRadius: 'var(--radius-xl)',
-                  boxShadow: 'var(--shadow-lg)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                  zIndex: 10
-                }}>
+                <div className="admin-save-bar">
                   <div>
                     <strong>Ready to publish your updates?</strong>
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>

@@ -19,29 +19,8 @@ export default function About() {
     <main className="page-content">
       <div className="container" style={{ maxWidth: 860 }}>
         {/* Creator Hero Card */}
-        <div style={{
-          background: 'var(--bg-card)',
-          borderRadius: 'var(--radius-xl)',
-          border: '1.5px solid var(--border-light)',
-          padding: '36px 32px',
-          marginBottom: 32,
-          display: 'flex',
-          gap: 32,
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          boxShadow: 'var(--shadow-sm)'
-        }}>
-          <div style={{
-            width: 190,
-            height: 190,
-            borderRadius: 'var(--radius-xl)',
-            overflow: 'hidden',
-            border: '3px solid var(--clay)',
-            boxShadow: '0 8px 24px rgba(198,91,61,0.25)',
-            flexShrink: 0,
-            margin: '0 auto',
-            background: 'var(--paper-dark)'
-          }}>
+        <div className="creator-hero-card">
+          <div className="creator-hero-avatar-wrap">
             <img
               src={avatarSrc}
               alt={settings.creatorName || 'Parth'}
@@ -50,7 +29,7 @@ export default function About() {
             />
           </div>
 
-          <div style={{ flex: 1, minWidth: 280 }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -75,7 +54,7 @@ export default function About() {
               {settings.creatorBio || 'Welcome to my craft studio! I am Parth, a passionate young creator making origami, paintings, drawings, and unique handmade crafts with love and patience.'}
             </p>
 
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <div className="creator-hero-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {settings.youtubeChannelUrl && (
                 <a
                   href={settings.youtubeChannelUrl}
