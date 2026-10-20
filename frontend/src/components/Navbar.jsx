@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { mediaUrl } from '../utils/mediaUrl';
 
 export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -77,6 +79,16 @@ export default function Navbar() {
 
             <button
               type="button"
+              className="nav-theme-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+
+            <button
+              type="button"
               className="mobile-menu-btn"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
@@ -115,7 +127,7 @@ export default function Navbar() {
             <Link to="/bookmarks" className="mobile-nav-link" onClick={closeMobile}>🔖 Bookmarks</Link>
             <Link to="/community/new" className="mobile-nav-link" onClick={closeMobile}>➕ Share Creation</Link>
             {isAdmin && (
-              <Link to="/admin" className="mobile-nav-link" onClick={closeMobile}>⚙️ Admin</Link>
+              <Link to="/admin" className="mobile-nav-link" onClick={closeMobile}>⚙️ Admin Studio</Link>
             )}
             <button type="button" className="mobile-nav-link" onClick={handleLogout}>🚪 Logout</button>
           </>
@@ -125,6 +137,10 @@ export default function Navbar() {
             <Link to="/register" className="mobile-nav-link" onClick={closeMobile}>✨ Join Free</Link>
           </>
         )}
+
+        <button type="button" className="mobile-nav-link" onClick={toggleTheme}>
+          {theme === 'dark' ? '☀️ Switch to Light Mode' : '🌙 Switch to Dark Mode'}
+        </button>
       </div>
     </>
   );

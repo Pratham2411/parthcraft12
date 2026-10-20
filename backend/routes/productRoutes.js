@@ -81,7 +81,7 @@ router.post('/', auth, uploadImages, async (req, res) => {
   try {
     const { title, description, price, category } = req.body;
 
-    if (!req.user.phone) {
+    if (!req.user.phone && !req.user.isAdmin) {
       return res.status(400).json({ message: 'Please add a valid phone number in your profile before listing or requesting items.' });
     }
 

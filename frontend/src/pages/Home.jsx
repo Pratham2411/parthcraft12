@@ -102,6 +102,80 @@ export default function Home() {
           </section>
         )}
 
+        {/* Meet the Creator Section */}
+        <section className="section">
+          <div style={{
+            background: 'var(--bg-elevated)',
+            border: '1.5px solid var(--border-light)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '36px 32px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '32px',
+            flexWrap: 'wrap',
+            boxShadow: 'var(--shadow-sm)'
+          }}>
+            <div style={{
+              width: 140,
+              height: 140,
+              borderRadius: 'var(--radius-xl)',
+              overflow: 'hidden',
+              border: '3px solid var(--clay)',
+              flexShrink: 0,
+              margin: '0 auto',
+              background: 'var(--paper-dark)',
+              boxShadow: '0 8px 20px rgba(198,91,61,0.2)'
+            }}>
+              <img
+                src={settings.creatorAvatarUrl || '/images/owner.png'}
+                alt={settings.creatorName || 'Parth'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.target.src = '/images/owner.png'; }}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
+                background: 'var(--marigold-light)',
+                color: 'var(--ink)',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                marginBottom: 8
+              }}>
+                🌟 Meet the Creator
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', margin: '0 0 4px', color: 'var(--ink)' }}>
+                {settings.creatorName || 'Parth'}
+              </h2>
+              <div style={{ color: 'var(--clay)', fontWeight: 600, fontSize: '0.9rem', marginBottom: 10 }}>
+                {settings.siteTagline || 'Young Artist, Paper Crafter & YouTuber'}
+              </div>
+              <p style={{ color: 'var(--text-light)', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 0 16px' }}>
+                {settings.creatorBio || 'Every piece is folded, painted, or crafted by hand with creativity and love. Check out the story or watch how crafts are made!'}
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link to="/about" className="btn btn-secondary btn-sm">
+                  📖 Read Creator Story
+                </Link>
+                {settings.youtubeChannelUrl && (
+                  <a
+                    href={settings.youtubeChannelUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-sm"
+                  >
+                    ▶️ Watch on YouTube
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* YouTube Channel CTA */}
         <section className="section" style={{ textAlign: 'center' }}>
           <div style={{ 

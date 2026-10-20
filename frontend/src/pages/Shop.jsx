@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ProductCard from '../components/ProductCard';
+import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_CATEGORIES = [
   'All', 'Paintings', 'Drawings', 'Origami', 'Handmade Cards',
@@ -10,6 +11,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function Shop() {
+  const { isAdmin } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -45,6 +47,34 @@ export default function Shop() {
             Unique handmade creations you can own. Every piece is crafted with care.
           </p>
         </section>
+
+        {isAdmin && (
+          <div style={{
+            margin: '0 0 24px',
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--primary-light)',
+            border: '1.5px dashed var(--clay)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.8rem' }}>🎨</span>
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--ink)' }}>Admin & Creator Studio</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
+                  Ready to list a new origami, painting, drawing, or craft in your shop?
+                </div>
+              </div>
+            </div>
+            <Link to="/admin?tab=products&new=1" className="btn btn-primary btn-sm">
+              ➕ List a New Craft ✨
+            </Link>
+          </div>
+        )}
 
         <div id="listings" className="filters-bar">
           <div className="search-wrap">
@@ -85,6 +115,11 @@ export default function Shop() {
             <div className="empty-icon">🎨</div>
             <h3>No products found</h3>
             <p>Try adjusting your search or check back soon for new creations!</p>
+            {isAdmin && (
+              <Link to="/admin?tab=products&new=1" className="btn btn-primary" style={{ marginTop: 16 }}>
+                ➕ Add Your First Craft Now
+              </Link>
+            )}
           </div>
         ) : (
           <div className="product-grid">

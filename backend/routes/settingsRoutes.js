@@ -21,8 +21,8 @@ router.get('/', async (req, res) => {
       youtubeChannelUrl: settings.youtubeChannelUrl,
       youtubeChannelName: settings.youtubeChannelName,
       instagramUrl: settings.instagramUrl,
-      creatorAvatarUrl: settings.creatorAvatarUrl,
-      whatsappNumber: settings.whatsappNumber ? '✓ configured' : '',
+      creatorAvatarUrl: settings.creatorAvatarUrl || '/images/owner.png',
+      whatsappNumber: settings.whatsappNumber || '',
       upiQrImageUrl: settings.upiQrImageUrl,
       paymentInstructions: settings.paymentInstructions,
       currency: settings.currency,
@@ -59,6 +59,7 @@ router.patch('/', auth, admin, async (req, res) => {
     const allowedFields = [
       'siteName', 'siteTagline', 'creatorName', 'creatorBio',
       'youtubeChannelUrl', 'youtubeChannelName', 'instagramUrl',
+      'creatorAvatarUrl',
       'adminEmail', 'whatsappNumber',
       'paymentInstructions', 'currency', 'currencySymbol',
       'shippingCharge', 'freeShippingAbove', 'shippingInfo',
