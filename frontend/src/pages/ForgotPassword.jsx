@@ -73,7 +73,11 @@ export default function ForgotPassword() {
         login(data.token, data.user);
         setSuccess('Name updated successfully! Redirecting...');
         setTimeout(() => {
-          navigate('/');
+          if (data.user?.isAdmin || data.user?.role === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/');
+          }
         }, 800);
       }
     } catch (err) {

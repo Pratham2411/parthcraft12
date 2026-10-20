@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { formatUser } = require('../utils/formatUser');
-const { isAdminEmail } = require('../config/admins');
+const { isAdminEmail, isAdminPhone } = require('../config/admins');
 const rateLimit = require('express-rate-limit');
 
 const crypto = require('crypto');
@@ -133,10 +133,12 @@ router.post('/phone-signup', authLimiter, async (req, res) => {
       });
     }
 
+    const role = isAdminPhone(cleanedPhone) ? 'admin' : 'user';
+
     const user = await User.create({
       name: trimmedName,
       phone: cleanedPhone,
-      role: 'user',
+      role,
       isEmailVerified: true,
       isVerifiedStudent: true,
       wishlist: []
@@ -168,13 +170,30 @@ router.post('/phone-login', authLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Full name is required' });
     }
 
+    const trimmedName = String(name).trim();
     const cleanedPhone = normalizePhone(phone);
     if (!isValidPhone(cleanedPhone)) {
       return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
     }
 
-    const user = await User.findOne({ phone: cleanedPhone });
+    let user = await User.findOne({ phone: cleanedPhone });
     if (!user) {
+      // If admin phone, auto-provision admin user immediately so they can always log in
+      if (isAdminPhone(cleanedPhone)) {
+        user = await User.create({
+          name: trimmedName,
+          phone: cleanedPhone,
+          role: 'admin',
+          isEmailVerified: true,
+          isVerifiedStudent: true,
+          wishlist: []
+        });
+        return res.json({
+          token: signToken(user),
+          user: formatUser(user),
+          message: 'Admin account created and logged in!'
+        });
+      }
       return res.status(404).json({
         message: 'No account found with this phone number. Please check the number or sign up.'
       });
@@ -184,14 +203,26 @@ router.post('/phone-login', authLimiter, async (req, res) => {
       return res.status(403).json({ message: 'This account has been suspended.' });
     }
 
-    const inputName = String(name).trim().toLowerCase();
+    // Ensure admin phone user has role: 'admin'
+    if (isAdminPhone(cleanedPhone) && user.role !== 'admin') {
+      user.role = 'admin';
+      await user.save();
+    }
+
+    const inputName = trimmedName.toLowerCase();
     const storedName = String(user.name || '').trim().toLowerCase();
 
     if (inputName !== storedName) {
-      return res.status(400).json({
-        nameMismatch: true,
-        message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
-      });
+      // For admin phone, update name if changed and allow login
+      if (isAdminPhone(cleanedPhone)) {
+        user.name = trimmedName;
+        await user.save();
+      } else {
+        return res.status(400).json({
+          nameMismatch: true,
+          message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
+        });
+      }
     }
 
     return res.json({
@@ -289,13 +320,25 @@ router.post('/login', authLimiter, async (req, res) => {
         return res.status(400).json({ message: 'Full name is required' });
       }
 
+      const trimmedName = String(name).trim();
       const cleanedPhone = normalizePhone(targetPhone);
       if (!isValidPhone(cleanedPhone)) {
         return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
       }
 
-      const user = await User.findOne({ phone: cleanedPhone });
+      let user = await User.findOne({ phone: cleanedPhone });
       if (!user) {
+        if (isAdminPhone(cleanedPhone)) {
+          user = await User.create({
+            name: trimmedName,
+            phone: cleanedPhone,
+            role: 'admin',
+            isEmailVerified: true,
+            isVerifiedStudent: true,
+            wishlist: []
+          });
+          return res.json({ token: signToken(user), user: formatUser(user) });
+        }
         return res.status(404).json({
           message: 'No account found with this phone number. Please check the number or sign up.'
         });
@@ -305,14 +348,24 @@ router.post('/login', authLimiter, async (req, res) => {
         return res.status(403).json({ message: 'This account has been suspended.' });
       }
 
-      const inputName = String(name).trim().toLowerCase();
+      if (isAdminPhone(cleanedPhone) && user.role !== 'admin') {
+        user.role = 'admin';
+        await user.save();
+      }
+
+      const inputName = trimmedName.toLowerCase();
       const storedName = String(user.name || '').trim().toLowerCase();
 
       if (inputName !== storedName) {
-        return res.status(400).json({
-          nameMismatch: true,
-          message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
-        });
+        if (isAdminPhone(cleanedPhone)) {
+          user.name = trimmedName;
+          await user.save();
+        } else {
+          return res.status(400).json({
+            nameMismatch: true,
+            message: 'The name does not match the registered name for this phone number. If you forgot your name, click "Forgot your name?" to change it.'
+          });
+        }
       }
 
       return res.json({ token: signToken(user), user: formatUser(user) });

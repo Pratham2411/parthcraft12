@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { isAdminEmail } = require('../config/admins');
+const { isAdminEmail, isAdminPhone } = require('../config/admins');
 
 const userSchema = new mongoose.Schema(
   {
@@ -38,8 +38,10 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function (next) {
-  // Promote to admin if email is in the admin list
-  if (isAdminEmail(this.email)) this.role = 'admin';
+  // Promote to admin if email or phone is in the admin list
+  if (isAdminEmail(this.email) || isAdminPhone(this.phone)) {
+    this.role = 'admin';
+  }
   // Only hash password when it's present and changed
   if (!this.password || !this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);

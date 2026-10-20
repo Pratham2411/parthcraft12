@@ -49,7 +49,11 @@ export default function Register() {
 
       if (data.token && data.user) {
         login(data.token, data.user);
-        navigate('/');
+        if (data.user?.isAdmin || data.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
       setError(getApiErrorMessage(err, 'Registration failed. Please try again.'));

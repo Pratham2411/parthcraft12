@@ -62,7 +62,11 @@ export default function Login() {
       });
 
       login(data.token, data.user);
-      navigate('/');
+      if (data.user?.isAdmin || data.user?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       if (err.response?.data?.nameMismatch) {
         setNameMismatch(true);

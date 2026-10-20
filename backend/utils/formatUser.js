@@ -1,15 +1,15 @@
-const { isAdminEmail } = require('../config/admins');
+const { isAdmin } = require('../config/admins');
 
 const resolveRole = (user) => {
   if (!user) return 'user';
-  if (user.role === 'admin' || isAdminEmail(user.email)) return 'admin';
+  if (isAdmin(user)) return 'admin';
   return user.role || 'user';
 };
 
 const formatUser = (user) => ({
-  id: String(user._id),
+  id: String(user._id || user.id || ''),
   name: user.name,
-  email: user.email,
+  email: user.email || '',
   role: resolveRole(user),
   isAdmin: resolveRole(user) === 'admin',
   isBanned: !!user.isBanned,
@@ -21,4 +21,3 @@ const formatUser = (user) => ({
 });
 
 module.exports = { formatUser, resolveRole };
-

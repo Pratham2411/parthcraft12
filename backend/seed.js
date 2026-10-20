@@ -195,6 +195,32 @@ async function seed() {
     console.log(`✅ Updated existing admin user: ${adminEmail} with password: 230459 and role: admin`);
   }
 
+  // 1b. Seed phone admin accounts
+  const adminPhones = [
+    { phone: '8877396175', name: 'Admin (8877396175)' },
+    { phone: '7808519486', name: 'Admin (7808519486)' },
+  ];
+
+  for (const ap of adminPhones) {
+    let pAdmin = await User.findOne({ phone: ap.phone });
+    if (!pAdmin) {
+      pAdmin = new User({
+        name: ap.name,
+        phone: ap.phone,
+        role: 'admin',
+        isEmailVerified: true,
+        isVerifiedStudent: true,
+        wishlist: [],
+      });
+      await pAdmin.save();
+      console.log(`✅ Admin phone user created: ${ap.phone}`);
+    } else {
+      pAdmin.role = 'admin';
+      await pAdmin.save();
+      console.log(`✅ Admin phone user updated: ${ap.phone}`);
+    }
+  }
+
   // 2. Site settings
   await SiteSettings.findOneAndUpdate(
     { _id: 'site_settings' },
