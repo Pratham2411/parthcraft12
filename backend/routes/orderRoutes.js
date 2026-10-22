@@ -20,8 +20,9 @@ const uploadScreenshot = createUpload(1, 5).single('screenshot');
 // ── Helpers ──
 
 const buildWhatsAppUrl = (phone, message) => {
-  if (!phone) return '';
-  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const raw = phone || '8877396175';
+  let cleanPhone = raw.replace(/[^0-9]/g, '');
+  if (cleanPhone.length === 10) cleanPhone = '91' + cleanPhone;
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { mediaUrl } from '../utils/mediaUrl';
 
 const CATEGORIES = [
   'All', 'Painting', 'Drawing', 'Origami', 'Craft', 'DIY',
@@ -10,7 +11,7 @@ const CATEGORIES = [
 ];
 
 export default function Community() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
@@ -56,6 +57,16 @@ export default function Community() {
     } catch (err) { console.error(err); }
   };
 
+  const getPostCover = (post) => {
+    if (post.type === 'youtube' || post.youtubeVideoId) {
+      if (post.youtubeThumbnail) return post.youtubeThumbnail;
+      if (post.youtubeVideoId) return `https://img.youtube.com/vi/${post.youtubeVideoId}/hqdefault.jpg`;
+    }
+    const raw = post.imageUrls?.[0] || post.images?.[0];
+    if (raw) return mediaUrl(raw);
+    return '/images/owner.png';
+  };
+
   return (
     <main className="page-content">
       <div className="container">
@@ -66,11 +77,16 @@ export default function Community() {
           <p className="hero-subtitle">
             Share your creations, discover inspiration, and connect with fellow craft lovers.
           </p>
-          {isAuthenticated && (
-            <div style={{ marginTop: 16 }}>
-              <Link to="/community/new" className="btn btn-primary">➕ Share Your Creation</Link>
-            </div>
-          )}
+          <div style={{ marginTop: 16, display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to={isAuthenticated ? "/community/new" : "/login"} className="btn btn-primary">
+              ➕ Share Your Creation ✨
+            </Link>
+            {isAdmin && (
+              <Link to="/admin?tab=moderation" className="btn btn-secondary">
+                🛡️ Moderation Studio
+              </Link>
+            )}
+          </div>
         </section>
 
         <div className="filters-bar">
@@ -99,9 +115,9 @@ export default function Community() {
             <div className="empty-icon">🎨</div>
             <h3>No posts yet</h3>
             <p>Be the first to share your craft creation!</p>
-            {isAuthenticated && (
-              <Link to="/community/new" className="btn btn-primary" style={{ marginTop: 16 }}>Share Now</Link>
-            )}
+            <Link to={isAuthenticated ? "/community/new" : "/login"} className="btn btn-primary" style={{ marginTop: 16 }}>
+              Share Now ✨
+            </Link>
           </div>
         ) : (
           <>
@@ -111,11 +127,12 @@ export default function Community() {
                   <Link to={`/community/post/${post._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className="community-card-image">
                       <img 
-                        src={post.type === 'youtube' ? post.youtubeThumbnail : post.imageUrls?.[0]} 
+                        src={getPostCover(post)} 
                         alt={post.title} 
                         loading="lazy" 
+                        onError={(e) => { e.target.src = '/images/owner.png'; }}
                       />
-                      {post.type === 'youtube' && (
+                      {(post.type === 'youtube' || post.youtubeVideoId) && (
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <span style={{ fontSize: '3rem', opacity: 0.9 }}>▶️</span>
                         </div>
@@ -130,7 +147,7 @@ export default function Community() {
                       <div className="community-card-header">
                         <span className="user-avatar user-avatar-sm">
                           {post.author?.avatarUrl
-                            ? <img src={post.author.avatarUrl} alt="" />
+                            ? <img src={mediaUrl(post.author.avatarUrl)} alt="" />
                             : <span>{post.author?.name?.charAt(0) || '?'}</span>}
                         </span>
                         <div>
@@ -139,7 +156,9 @@ export default function Community() {
                         </div>
                       </div>
                       <div className="community-card-title">{post.title}</div>
-                      {post.caption && <div className="community-card-caption">{post.caption}</div>}
+                      {(post.caption || post.description) && (
+                        <div className="community-card-caption">{post.caption || post.description}</div>
+                      )}
                     </div>
                   </Link>
                   <div className="community-card-actions" style={{ padding: '0 16px 16px' }}>

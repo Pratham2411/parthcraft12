@@ -10,13 +10,18 @@ const { createUpload } = require('../middleware/multerUpload');
 const { uploadFiles, deleteStoredImage } = require('../utils/imageStorage');
 const rateLimit = require('express-rate-limit');
 
-const postLimiter = rateLimit({
+const postRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many posts. Please try again later.' },
 });
+
+const postLimiter = (req, res, next) => {
+  if (req.user?.isAdmin) return next();
+  return postRateLimiter(req, res, next);
+};
 
 const commentLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -148,21 +153,28 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
 router.post('/', auth, postLimiter, uploadPostImages, async (req, res) => {
   try {
-    const { title, caption, category, tags, type, youtubeUrl } = req.body;
+    const { title, caption, description, category, tags, type, youtubeUrl, featured } = req.body;
 
     if (!title?.trim()) return res.status(400).json({ message: 'Title is required' });
     if (!type || !['photo', 'youtube'].includes(type)) {
       return res.status(400).json({ message: 'Post type must be photo or youtube' });
     }
 
+    const postCaption = (caption || description || '').trim();
+    const isAdminUser = Boolean(req.user?.isAdmin);
+
     const postData = {
       author: req.user.id,
       type,
       title: title.trim(),
-      caption: caption?.trim() || '',
+      caption: postCaption,
+      description: postCaption,
       category: category || 'Other',
       tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map((t) => t.trim())).slice(0, 10) : [],
-      status: 'pending',
+      status: isAdminUser ? 'approved' : 'pending',
+      moderatedBy: isAdminUser ? req.user.id : null,
+      moderatedAt: isAdminUser ? new Date() : null,
+      featured: isAdminUser ? Boolean(featured === true || featured === 'true') : false,
     };
 
     if (type === 'photo') {

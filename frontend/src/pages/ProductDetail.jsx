@@ -10,12 +10,19 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isAdmin, updateUser } = useAuth();
   const [product, setProduct] = useState(null);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
-    api.get(`/products/${id}`)
-      .then(({ data }) => setProduct(data))
+    Promise.all([
+      api.get(`/products/${id}`),
+      api.get('/settings').catch(() => ({ data: {} })),
+    ])
+      .then(([prodRes, settRes]) => {
+        setProduct(prodRes.data);
+        if (settRes?.data) setSettings(settRes.data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -102,11 +109,46 @@ export default function ProductDetail() {
             <div className="product-description">{product.description}</div>
 
             {/* Actions */}
-            <div className="product-action-group">
-              {product.status === 'available' && (
-                <Link to={`/order/${product._id}`} className="btn btn-primary btn-lg">
-                  🛒 Buy Now
+            <div className="product-action-group" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              {isAdmin ? (
+                <Link to="/admin?tab=products" className="btn btn-primary btn-lg" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  ⚙️ Manage in Admin Studio
                 </Link>
+              ) : (
+                <>
+                  {product.status === 'available' && (
+                    <Link to={`/order/${product._id}`} className="btn btn-primary btn-lg">
+                      🛒 Buy Now
+                    </Link>
+                  )}
+                  {(() => {
+                    const raw = settings?.whatsappNumber || '8877396175';
+                    let clean = raw.replace(/[^0-9]/g, '');
+                    if (clean.length === 10) clean = '91' + clean;
+                    const msg = `Hi Parth! I'm interested in buying "${product.title}" (₹${product.price}) from ParthCraft12. Is it available?`;
+                    const waUrl = `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+                    return (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-whatsapp btn-lg"
+                        style={{
+                          background: '#25D366',
+                          color: '#ffffff',
+                          border: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                        }}
+                      >
+                        💬 Buy via WhatsApp
+                      </a>
+                    );
+                  })()}
+                </>
               )}
               <button className={`btn btn-secondary btn-lg`} onClick={toggleWishlist}>
                 {inWishlist ? '❤️ In Wishlist' : '🤍 Add to Wishlist'}

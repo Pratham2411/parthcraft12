@@ -66,6 +66,21 @@ export default function Navbar() {
                 <Link to="/my-orders" className={`nav-link${isActive('/my-orders')}`}>Orders</Link>
                 {isAdmin && <Link to="/admin" className={`nav-link${isActive('/admin')}`}>Admin</Link>}
 
+                {isAdmin ? (
+                  <>
+                    <Link to="/admin?tab=products&new=1" className="btn btn-primary btn-sm" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                      ➕ List Craft
+                    </Link>
+                    <Link to="/community/new" className="btn btn-secondary btn-sm" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+                      📸 Post
+                    </Link>
+                  </>
+                ) : (
+                  <Link to="/community/new" className="btn btn-primary btn-sm" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>
+                    ➕ Share Craft
+                  </Link>
+                )}
+
                 <button type="button" onClick={handleLogout} className="btn btn-ghost btn-sm">
                   Logout
                 </button>
@@ -145,11 +160,21 @@ export default function Navbar() {
               <Link to="/profile" className={`mobile-nav-link${isActive('/profile')}`} onClick={closeMobile}>👤 My Profile</Link>
               <Link to="/my-orders" className={`mobile-nav-link${isActive('/my-orders')}`} onClick={closeMobile}>📦 My Orders</Link>
               <Link to="/bookmarks" className={`mobile-nav-link${isActive('/bookmarks')}`} onClick={closeMobile}>🔖 Saved Crafts</Link>
-              <Link to="/community/new" className={`mobile-nav-link${isActive('/community/new')}`} onClick={closeMobile}>➕ Share a Craft</Link>
-              {isAdmin && (
-                <Link to="/admin" className={`mobile-nav-link mobile-nav-admin${location.pathname.startsWith('/admin') ? ' active' : ''}`} onClick={closeMobile}>
-                  ⚙️ Admin Studio
-                </Link>
+              
+              {isAdmin ? (
+                <>
+                  <Link to="/admin?tab=products&new=1" className="mobile-nav-link" onClick={closeMobile} style={{ color: 'var(--clay)', fontWeight: 700 }}>
+                    ✨ List Craft to Shop
+                  </Link>
+                  <Link to="/community/new" className="mobile-nav-link" onClick={closeMobile}>
+                    📸 Share Craft to Community
+                  </Link>
+                  <Link to="/admin" className={`mobile-nav-link mobile-nav-admin${location.pathname.startsWith('/admin') ? ' active' : ''}`} onClick={closeMobile}>
+                    ⚙️ Admin Studio
+                  </Link>
+                </>
+              ) : (
+                <Link to="/community/new" className={`mobile-nav-link${isActive('/community/new')}`} onClick={closeMobile}>➕ Share a Craft</Link>
               )}
               <button type="button" className="mobile-nav-link mobile-nav-logout" onClick={handleLogout}>🚪 Logout</button>
             </>

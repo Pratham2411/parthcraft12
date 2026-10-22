@@ -9,7 +9,11 @@ import ImageUploader, {
 } from '../components/ImageUploader';
 import { MAX_LISTING_IMAGES, getProductImages } from '../utils/productImage';
 
-const CATEGORIES = ['Books', 'Electronics', 'Clothing', 'Furniture', 'Stationery', 'Sports', 'Other'];
+const CATEGORIES = [
+  'Origami', 'Paintings', 'Drawings', 'Handmade Cards',
+  'Crochet', 'Pottery', 'Calligraphy', 'Home Decor',
+  'Jewelry', 'Gift Items', 'Other'
+];
 
 export default function SellItem() {
   const { id } = useParams();
@@ -18,14 +22,14 @@ export default function SellItem() {
   const isEdit = !!id;
 
   useEffect(() => {
-    if (user && !user.phone) {
-      alert('Please add a valid phone number in your profile before listing or requesting items.');
+    if (user && !user.phone && !user.isAdmin) {
+      alert('Please add a valid phone number in your profile before listing items.');
       navigate('/profile');
     }
   }, [user, navigate]);
 
   const [form, setForm] = useState({
-    title: '', description: '', price: '', category: 'Books',
+    title: '', description: '', price: '', category: 'Origami',
   });
   const [imageItems, setImageItems] = useState([]);
   const [error, setError] = useState('');
@@ -125,7 +129,7 @@ export default function SellItem() {
       } else {
         await api.post('/products', payload);
       }
-      navigate('/dashboard');
+      navigate('/shop');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     } finally {
@@ -140,8 +144,8 @@ export default function SellItem() {
       <div className="container sell-container">
         
         <div style={{ marginBottom: '24px' }}>
-          <h1 className="page-title" style={{ marginBottom: '8px' }}>{isEdit ? 'Edit Listing' : 'What are you selling?'}</h1>
-          <p className="page-subtitle">Tap and type to list your item instantly.</p>
+          <h1 className="page-title" style={{ marginBottom: '8px' }}>{isEdit ? 'Edit Listing' : 'List a Handmade Craft'}</h1>
+          <p className="page-subtitle">Add your creation to the ParthCraft12 shop.</p>
         </div>
 
         <form id="sell-form" onSubmit={handleSubmit} className="sell-form-layout">
@@ -171,7 +175,7 @@ export default function SellItem() {
               <input
                 id="sell-title"
                 name="title"
-                placeholder="Title (e.g. Engineering Math Book)"
+                placeholder="Title (e.g. 3D Origami Swan, Sunset Watercolor Painting)"
                 value={form.title}
                 onChange={handleChange}
                 required
@@ -183,7 +187,7 @@ export default function SellItem() {
               <textarea
                 id="sell-description"
                 name="description"
-                placeholder="Description (Optional) Condition, edition, defects..."
+                placeholder="Description: Materials used, dimensions, handmade story, care instructions..."
                 value={form.description}
                 onChange={handleChange}
                 rows={3}

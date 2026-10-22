@@ -61,7 +61,7 @@ router.patch('/', auth, admin, async (req, res) => {
       'youtubeChannelUrl', 'youtubeChannelName', 'instagramUrl',
       'creatorAvatarUrl',
       'adminEmail', 'whatsappNumber',
-      'paymentInstructions', 'currency', 'currencySymbol',
+      'upiQrImageUrl', 'paymentInstructions', 'currency', 'currencySymbol',
       'shippingCharge', 'freeShippingAbove', 'shippingInfo',
       'returnPolicy', 'privacyPolicy', 'termsOfService',
       'featuredVideos', 'productCategories',

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api/axios';
+import { mediaUrl } from '../utils/mediaUrl';
 
 const STATUS_LABELS = {
   awaiting_payment: '⏳ Awaiting Payment',
@@ -40,6 +41,15 @@ export default function AdminDashboard() {
 
   // Kid-friendly craft creation state
   const [showAddCraft, setShowAddCraft] = useState(autoOpenNew || initialTab === 'products');
+
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t) setTab(t);
+    if (searchParams.get('new') === '1') {
+      setTab('products');
+      setShowAddCraft(true);
+    }
+  }, [searchParams]);
   const [craftTitle, setCraftTitle] = useState('');
   const [craftCategory, setCraftCategory] = useState('Origami');
   const [craftPrice, setCraftPrice] = useState('100');
@@ -62,6 +72,7 @@ export default function AdminDashboard() {
     instagramUrl: '',
     shippingInfo: '',
     returnPolicy: '',
+    upiQrImageUrl: '',
     paymentInstructions: '',
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -69,7 +80,9 @@ export default function AdminDashboard() {
   const [settingsSuccess, setSettingsSuccess] = useState('');
   const [settingsError, setSettingsError] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [qrUploading, setQrUploading] = useState(false);
   const avatarInputRef = useRef(null);
+  const qrInputRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -110,6 +123,7 @@ export default function AdminDashboard() {
           instagramUrl: data.instagramUrl || '',
           shippingInfo: data.shippingInfo || '',
           returnPolicy: data.returnPolicy || '',
+          upiQrImageUrl: data.upiQrImageUrl || '',
           paymentInstructions: data.paymentInstructions || '',
         });
       }
@@ -141,6 +155,42 @@ export default function AdminDashboard() {
     } finally {
       setAvatarUploading(false);
       if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
+  const handleQrUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setQrUploading(true);
+    setSettingsError('');
+    setSettingsSuccess('');
+    const formData = new FormData();
+    formData.append('qrImage', file);
+    try {
+      const { data } = await api.post('/settings/qr', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSettingsData(prev => ({ ...prev, upiQrImageUrl: data.upiQrImageUrl }));
+      setSettingsSuccess('🎉 UPI QR Code uploaded successfully! Customers can now scan this QR to pay during checkout.');
+    } catch (err) {
+      console.error('Failed to upload QR code:', err);
+      setSettingsError(err.response?.data?.message || 'Could not upload QR image. Please try again.');
+    } finally {
+      setQrUploading(false);
+      if (qrInputRef.current) qrInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveQr = async () => {
+    if (!window.confirm('Are you sure you want to remove the current UPI QR code?')) return;
+    setSettingsError('');
+    setSettingsSuccess('');
+    try {
+      await api.patch('/settings', { upiQrImageUrl: '' });
+      setSettingsData(prev => ({ ...prev, upiQrImageUrl: '' }));
+      setSettingsSuccess('UPI QR Code removed successfully.');
+    } catch (err) {
+      setSettingsError('Failed to remove UPI QR code.');
     }
   };
 
@@ -386,6 +436,9 @@ export default function AdminDashboard() {
               <button className="btn btn-accent btn-sm" onClick={() => setTab('settings')}>
                 ⚙️ Edit Creator Profile & Bio
               </button>
+              <button className="btn btn-secondary btn-sm" onClick={() => setTab('settings')}>
+                💳 UPI Payment QR Code
+              </button>
               <button className="btn btn-secondary btn-sm" onClick={() => setTab('products')}>
                 🎨 View All Products ({stats.products || 0})
               </button>
@@ -395,6 +448,9 @@ export default function AdminDashboard() {
               <button className="btn btn-secondary btn-sm" onClick={() => setTab('moderation')}>
                 🛡️ Review Community Posts ({stats.pendingPosts || 0})
               </button>
+              <Link to="/community/new" className="btn btn-secondary btn-sm">
+                📸 Share Post to Community
+              </Link>
             </div>
             <div style={{ padding: '16px', background: 'var(--paper-dark)', borderRadius: 'var(--radius-md)' }}>
               <strong>💡 Kid Creator Tip:</strong> Take bright, clear photos of your origami, drawings, or crafts in natural light! Buyers love seeing different angles and close-up details.
@@ -1088,7 +1144,129 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* 4. Store Policies & Shipping */}
+                {/* 4. Payment & UPI QR Code Setup */}
+                <div className="card" style={{ padding: 24 }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    💳 UPI Payment QR Code & Instructions
+                  </h3>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: 20 }}>
+                    Upload your UPI QR code (Google Pay, PhonePe, Paytm, or BHIM) so buyers can scan and pay directly on the website during checkout!
+                  </p>
+
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: 16 }}>
+                    {/* QR Code Preview Box */}
+                    <div style={{
+                      width: 180,
+                      minHeight: 180,
+                      borderRadius: 'var(--radius-lg)',
+                      border: '2px dashed var(--border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 12,
+                      background: 'var(--paper-dark)',
+                      position: 'relative',
+                      textAlign: 'center'
+                    }}>
+                      {settingsData.upiQrImageUrl ? (
+                        <>
+                          <img
+                            src={mediaUrl(settingsData.upiQrImageUrl)}
+                            alt="UPI QR Code"
+                            style={{ width: '100%', height: 'auto', maxHeight: 155, objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+                          />
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6, fontWeight: 600 }}>Active QR Code</div>
+                        </>
+                      ) : (
+                        <div style={{ padding: 8 }}>
+                          <div style={{ fontSize: '2.5rem', marginBottom: 6 }}>📱</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>No QR Uploaded</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tap upload to add</div>
+                        </div>
+                      )}
+
+                      {qrUploading && (
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(0,0,0,0.65)',
+                          borderRadius: 'var(--radius-lg)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#fff',
+                          fontSize: '0.85rem',
+                          fontWeight: 600
+                        }}>
+                          Uploading...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* QR Upload Actions & Controls */}
+                    <div style={{ flex: 1, minWidth: 260, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={qrInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleQrUpload}
+                      />
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={qrUploading}
+                          onClick={() => qrInputRef.current?.click()}
+                        >
+                          {qrUploading ? '⏳ Uploading...' : '📁 Upload New UPI QR Code'}
+                        </button>
+                        {settingsData.upiQrImageUrl && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={handleRemoveQr}
+                          >
+                            🗑️ Remove QR Code
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.5, background: 'var(--paper-dark)', padding: '10px 14px', borderRadius: 'var(--radius-md)' }}>
+                        💡 <strong>Tip for Parth:</strong> Open Google Pay or PhonePe on your phone, open "My QR / Receive Money", take a screenshot, and upload it here! Customers will see it at checkout.
+                      </div>
+
+                      <div>
+                        <label className="form-label" style={{ fontSize: '0.85rem' }}>Or Direct QR Image URL (Optional):</label>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="https://..."
+                          value={settingsData.upiQrImageUrl}
+                          onChange={e => setSettingsData(prev => ({ ...prev, upiQrImageUrl: e.target.value }))}
+                          style={{ fontSize: '0.85rem' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 12 }}>
+                    <label className="form-label">Payment Instructions for Buyers</label>
+                    <textarea
+                      className="form-input"
+                      rows={2}
+                      placeholder="e.g. Scan the QR code using Google Pay, PhonePe, or Paytm, pay the exact amount, and upload the payment screenshot!"
+                      value={settingsData.paymentInstructions}
+                      onChange={e => setSettingsData(prev => ({ ...prev, paymentInstructions: e.target.value }))}
+                    />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      Displayed to buyers on the payment screen right below the QR code.
+                    </span>
+                  </div>
+                </div>
+
+                {/* 5. Store Policies & Shipping */}
                 <div className="card" style={{ padding: 24 }}>
                   <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                     🚚 Shipping & Store Policies

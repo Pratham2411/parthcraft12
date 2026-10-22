@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
+import { mediaUrl } from '../utils/mediaUrl';
+import { resolveProductImageSrc } from '../utils/productImage';
 
 const STEPS = ['Details', 'Payment', 'Confirm'];
 
 export default function OrderFlow() {
   const { productId } = useParams();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [product, setProduct] = useState(null);
@@ -103,6 +105,30 @@ export default function OrderFlow() {
   if (loading) return <main className="page-content"><div className="loader-page"><div className="spinner" /></div></main>;
   if (!product) return <main className="page-content"><div className="container"><div className="empty-state"><h3>Product not found</h3></div></div></main>;
 
+  if (isAdmin) {
+    return (
+      <main className="page-content">
+        <div className="container" style={{ maxWidth: 600 }}>
+          <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+            <div style={{ fontSize: '3.5rem', marginBottom: 12 }}>👑</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: 8 }}>Owner View: ParthCraft12</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: 24, fontSize: '1.05rem', lineHeight: 1.5 }}>
+              You are logged in as Parth (Store Owner). You do not need to purchase your own crafts! You can manage listings, update photos, or change prices directly in Admin Studio.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/admin?tab=products" className="btn btn-primary btn-lg">
+                ⚙️ Manage Products in Admin Studio
+              </Link>
+              <Link to={`/products/${productId}`} className="btn btn-secondary btn-lg">
+                👁️ View Product Page
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const { subtotal, shipping, total } = calcTotal();
 
   return (
@@ -130,7 +156,11 @@ export default function OrderFlow() {
             {/* Product Summary */}
             <div className="card" style={{ display: 'flex', gap: 16, padding: 16, marginBottom: 24 }}>
               {product.imageUrl && (
-                <img src={product.imageUrl} alt={product.title} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                <img
+                  src={resolveProductImageSrc(product.imageUrl)}
+                  alt={product.title}
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
+                />
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>{product.title}</div>
@@ -209,6 +239,38 @@ export default function OrderFlow() {
             <button className="btn btn-primary btn-lg" onClick={handlePlaceOrder} disabled={submitting} style={{ width: '100%' }}>
               {submitting ? 'Placing Order...' : `Proceed to Payment — ₹${total.toLocaleString('en-IN')}`}
             </button>
+
+            {(() => {
+              const raw = settings?.whatsappNumber || '8877396175';
+              let clean = raw.replace(/[^0-9]/g, '');
+              if (clean.length === 10) clean = '91' + clean;
+              const msg = `Hi Parth! I would like to order "${product.title}" (Qty: ${quantity}, Total: ₹${total.toLocaleString('en-IN')}) from ParthCraft12. Can you assist me?`;
+              const directWaUrl = `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+              return (
+                <div style={{ marginTop: 12 }}>
+                  <a
+                    href={directWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-whatsapp btn-lg"
+                    style={{
+                      width: '100%',
+                      background: '#25D366',
+                      color: '#ffffff',
+                      border: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      textDecoration: 'none',
+                      fontWeight: 600,
+                    }}
+                  >
+                    💬 Or Buy / Inquire via WhatsApp
+                  </a>
+                </div>
+              );
+            })()}
           </>
         )}
 
@@ -219,9 +281,31 @@ export default function OrderFlow() {
             <h2 style={{ fontFamily: 'var(--font-display)', marginBottom: 8 }}>Pay ₹{order.totalAmount.toLocaleString('en-IN')}</h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: 24 }}>{settings.paymentInstructions}</p>
 
-            {settings.upiQrImageUrl && (
+            {settings.upiQrImageUrl ? (
               <div style={{ marginBottom: 24 }}>
-                <img src={settings.upiQrImageUrl} alt="UPI QR Code" style={{ maxWidth: 250, margin: '0 auto', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }} />
+                <img
+                  src={mediaUrl(settings.upiQrImageUrl)}
+                  alt="UPI QR Code"
+                  style={{
+                    maxWidth: 260,
+                    margin: '0 auto',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '2px solid var(--border)',
+                    display: 'block',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+                  }}
+                />
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 8 }}>
+                  📱 Scan using Google Pay, PhonePe, Paytm, or any UPI app
+                </p>
+              </div>
+            ) : (
+              <div className="card" style={{ padding: 20, marginBottom: 24, background: 'var(--paper-dark)' }}>
+                <div style={{ fontSize: '2rem', marginBottom: 8 }}>💳</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}>Pay via UPI or WhatsApp</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Send payment to <strong>+91 {settings.whatsappNumber || '8877396175'}</strong> or message Parth on WhatsApp for instant confirmation.
+                </div>
               </div>
             )}
 

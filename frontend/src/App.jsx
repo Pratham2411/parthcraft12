@@ -53,6 +53,7 @@ export default function App() {
 
             {/* Admin */}
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/sell" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           </Routes>
           <Footer />
           <BottomNav />

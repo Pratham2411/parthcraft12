@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import ProductCard from '../components/ProductCard';
+import { mediaUrl } from '../utils/mediaUrl';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -78,26 +79,40 @@ export default function Home() {
               <Link to="/community" className="btn btn-secondary btn-sm">See All →</Link>
             </div>
             <div className="community-grid">
-              {communityPosts.slice(0, 6).map((post) => (
-                <Link to={`/community/post/${post._id}`} key={post._id} className="community-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="community-card-image">
-                    <img 
-                      src={post.type === 'youtube' ? post.youtubeThumbnail : post.imageUrls?.[0]} 
-                      alt={post.title} 
-                      loading="lazy" 
-                    />
-                  </div>
-                  <div className="community-card-body">
-                    <div className="community-card-title">{post.title}</div>
-                    <div className="community-card-caption">{post.caption}</div>
-                    <div className="community-card-actions">
-                      <span className="action-btn">❤️ {post.likeCount || 0}</span>
-                      <span className="action-btn">💬 {post.commentCount || 0}</span>
-                      <span style={{ marginLeft: 'auto' }} className="badge badge-sage">{post.category}</span>
+              {communityPosts.slice(0, 6).map((post) => {
+                const cover = post.type === 'youtube' || post.youtubeVideoId
+                  ? (post.youtubeThumbnail || (post.youtubeVideoId ? `https://img.youtube.com/vi/${post.youtubeVideoId}/hqdefault.jpg` : ''))
+                  : (post.imageUrls?.[0] || post.images?.[0] ? mediaUrl(post.imageUrls?.[0] || post.images?.[0]) : '/images/owner.png');
+
+                return (
+                  <Link to={`/community/post/${post._id}`} key={post._id} className="community-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="community-card-image">
+                      <img 
+                        src={cover} 
+                        alt={post.title} 
+                        loading="lazy" 
+                        onError={(e) => { e.target.src = '/images/owner.png'; }}
+                      />
+                      {(post.type === 'youtube' || post.youtubeVideoId) && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontSize: '2.5rem', opacity: 0.9 }}>▶️</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    <div className="community-card-body">
+                      <div className="community-card-title">{post.title}</div>
+                      {(post.caption || post.description) && (
+                        <div className="community-card-caption">{post.caption || post.description}</div>
+                      )}
+                      <div className="community-card-actions">
+                        <span className="action-btn">❤️ {post.likeCount || 0}</span>
+                        <span className="action-btn">💬 {post.commentCount || 0}</span>
+                        <span style={{ marginLeft: 'auto' }} className="badge badge-sage">{post.category}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

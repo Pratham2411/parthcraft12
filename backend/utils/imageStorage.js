@@ -3,7 +3,7 @@ const fs = require('fs');
 const { cloudinary, isCloudinaryEnabled, initCloudinary } = require('../config/cloudinary');
 
 const UPLOAD_ROOT = path.join(__dirname, '..', 'uploads');
-const CLOUD_FOLDER = process.env.CLOUDINARY_FOLDER || 'nit-patna-market';
+const CLOUD_FOLDER = process.env.CLOUDINARY_FOLDER || 'parthcraft12';
 
 const useCloudinary = () => {
   if (!isCloudinaryEnabled()) return false;

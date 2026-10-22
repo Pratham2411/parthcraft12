@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { mediaUrl } from '../utils/mediaUrl';
 
 export default function PostDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -44,6 +45,17 @@ export default function PostDetail() {
     } catch (err) { console.error(err); }
   };
 
+  const handleDeletePost = async () => {
+    if (!window.confirm('Are you sure you want to delete this community post?')) return;
+    try {
+      await api.delete(`/community/${id}`);
+      navigate('/community');
+    } catch (err) {
+      console.error('Failed to delete post:', err);
+      alert('Could not delete post.');
+    }
+  };
+
   const addComment = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -68,35 +80,52 @@ export default function PostDetail() {
   if (loading) return <main className="page-content"><div className="loader-page"><div className="spinner" /></div></main>;
   if (!post) return <main className="page-content"><div className="container"><div className="empty-state"><h3>Post not found</h3></div></div></main>;
 
+  const canDelete = user && (String(post.author?._id || post.author) === String(user.id || user._id) || user.isAdmin);
+  const postImages = (post.imageUrls?.length ? post.imageUrls : post.images) || [];
+
   return (
     <main className="page-content">
       <div className="container" style={{ maxWidth: 800 }}>
         {/* Post header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <span className="user-avatar">
-            {post.author?.avatarUrl 
-              ? <img src={post.author.avatarUrl} alt="" />
-              : <span>{post.author?.name?.charAt(0) || '?'}</span>}
-          </span>
-          <div>
-            <div style={{ fontWeight: 600 }}>{post.author?.displayName || post.author?.name}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              {new Date(post.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-              {' · '}{post.category}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span className="user-avatar">
+              {post.author?.avatarUrl 
+                ? <img src={mediaUrl(post.author.avatarUrl)} alt="" />
+                : <span>{post.author?.name?.charAt(0) || '?'}</span>}
+            </span>
+            <div>
+              <div style={{ fontWeight: 600 }}>{post.author?.displayName || post.author?.name}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                {new Date(post.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {' · '}{post.category}
+              </div>
             </div>
           </div>
+          {canDelete && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={handleDeletePost}
+              style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}
+              title="Delete this post"
+            >
+              🗑️ Delete Post
+            </button>
+          )}
         </div>
 
         <h1 style={{ fontFamily: 'var(--font-display)', marginBottom: 16, fontSize: '1.8rem' }}>{post.title}</h1>
 
-        {/* Media */}
-        {post.type === 'photo' && post.imageUrls?.map((url, i) => (
+        {/* Media: Photos */}
+        {postImages.length > 0 && postImages.map((url, i) => (
           <div key={i} style={{ marginBottom: 16, borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--paper-dark)' }}>
-            <img src={url} alt={post.title} style={{ width: '100%', maxHeight: 600, objectFit: 'contain' }} />
+            <img src={mediaUrl(url)} alt={post.title} style={{ width: '100%', maxHeight: 600, objectFit: 'contain' }} />
           </div>
         ))}
 
-        {post.type === 'youtube' && post.youtubeVideoId && (
+        {/* Media: YouTube */}
+        {post.youtubeVideoId && (
           <div style={{ marginBottom: 16, borderRadius: 'var(--radius-lg)', overflow: 'hidden', aspectRatio: '16/9' }}>
             <iframe
               width="100%" height="100%"
@@ -111,9 +140,9 @@ export default function PostDetail() {
         )}
 
         {/* Caption */}
-        {post.caption && (
+        {(post.caption || post.description) && (
           <p style={{ fontSize: '1.05rem', lineHeight: 1.7, color: 'var(--text-light)', marginBottom: 20, whiteSpace: 'pre-wrap' }}>
-            {post.caption}
+            {post.caption || post.description}
           </p>
         )}
 
