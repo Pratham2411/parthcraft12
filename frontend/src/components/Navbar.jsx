@@ -96,10 +96,11 @@ export default function Navbar() {
               type="button"
               className="nav-theme-btn"
               onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              <span className="theme-toggle-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
+              <span className="theme-toggle-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
 
             <button
@@ -125,9 +126,21 @@ export default function Navbar() {
           <Link to="/" className="navbar-logo" onClick={closeMobile}>
             🎨 ParthCraft12
           </Link>
-          <button type="button" className="mobile-drawer-close" onClick={closeMobile} aria-label="Close menu">
-            ✕
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              type="button"
+              className="nav-theme-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle theme"
+            >
+              <span className="theme-toggle-icon">{theme === 'dark' ? '☀️' : '🌙'}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+            <button type="button" className="mobile-drawer-close" onClick={closeMobile} aria-label="Close menu">
+              ✕
+            </button>
+          </div>
         </div>
 
         {user && (

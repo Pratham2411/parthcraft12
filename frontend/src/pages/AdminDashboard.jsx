@@ -87,7 +87,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [statsRes] = await Promise.all([api.get('/admin/stats')]);
+        const [statsRes] = await Promise.all([
+          api.get('/admin/stats'),
+          loadSettings(),
+        ]);
         setStats(statsRes.data);
       } catch (e) {
         console.error('Failed to fetch stats:', e);
@@ -214,7 +217,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (tab === 'products') {
       loadProducts();
-    } else if (tab === 'settings') {
+    } else if (tab === 'settings' || tab === 'payments') {
       loadSettings();
     } else if (tab === 'moderation') {
       api.get('/admin/community/pending').then(({ data }) => setPendingPosts(data)).catch(() => {});
@@ -408,6 +411,7 @@ export default function AdminDashboard() {
             { id: 'overview', label: '📊 Overview' },
             { id: 'products', label: '🎨 Crafts & Products' },
             { id: 'orders', label: '📦 Orders' },
+            { id: 'payments', label: '💳 UPI QR & Payment' },
             { id: 'settings', label: '⚙️ Creator Profile & Site' },
             { id: 'moderation', label: '🛡️ Moderation' },
             { id: 'reports', label: '🚩 Reports' },
@@ -424,36 +428,83 @@ export default function AdminDashboard() {
 
         {/* Overview Tab */}
         {tab === 'overview' && (
-          <div className="card" style={{ padding: 24 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 12 }}>🚀 Quick Actions</h3>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Dedicated Highlight Card for UPI QR Code */}
+            <div className="card" style={{
+              padding: 24,
+              borderLeft: '5px solid var(--clay)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 16,
+              background: 'var(--paper-light)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{
+                  fontSize: '2.2rem',
+                  background: 'var(--clay-light)',
+                  width: 56,
+                  height: 56,
+                  borderRadius: 'var(--radius-md)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  💳
+                </div>
+                <div>
+                  <h3 style={{ margin: '0 0 4px', fontFamily: 'var(--font-display)', fontSize: '1.25rem' }}>
+                    UPI Payment QR Code Setup
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                    {settingsData.upiQrImageUrl
+                      ? '✅ Active — Customers can scan your UPI QR code directly on checkout!'
+                      : '⚠️ Not Set — Upload your Google Pay / PhonePe QR so customers can scan & pay.'}
+                  </p>
+                </div>
+              </div>
               <button
-                className="btn btn-primary btn-sm"
-                onClick={() => { setTab('products'); setShowAddCraft(true); }}
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setTab('payments')}
+                style={{ whiteSpace: 'nowrap' }}
               >
-                ✨ Add New Craft to Shop
+                {settingsData.upiQrImageUrl ? '⚙️ Manage UPI QR Code' : '➕ Upload UPI QR Code Now'}
               </button>
-              <button className="btn btn-accent btn-sm" onClick={() => setTab('settings')}>
-                ⚙️ Edit Creator Profile & Bio
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => setTab('settings')}>
-                💳 UPI Payment QR Code
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => setTab('products')}>
-                🎨 View All Products ({stats.products || 0})
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => setTab('orders')}>
-                📦 Manage Orders ({stats.awaitingVerification || 0} pending payment verification)
-              </button>
-              <button className="btn btn-secondary btn-sm" onClick={() => setTab('moderation')}>
-                🛡️ Review Community Posts ({stats.pendingPosts || 0})
-              </button>
-              <Link to="/community/new" className="btn btn-secondary btn-sm">
-                📸 Share Post to Community
-              </Link>
             </div>
-            <div style={{ padding: '16px', background: 'var(--paper-dark)', borderRadius: 'var(--radius-md)' }}>
-              <strong>💡 Kid Creator Tip:</strong> Take bright, clear photos of your origami, drawings, or crafts in natural light! Buyers love seeing different angles and close-up details.
+
+            <div className="card" style={{ padding: 24 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', marginBottom: 12 }}>🚀 Quick Actions</h3>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => { setTab('products'); setShowAddCraft(true); }}
+                >
+                  ✨ Add New Craft to Shop
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setTab('payments')}>
+                  💳 Upload UPI QR Code
+                </button>
+                <button className="btn btn-accent btn-sm" onClick={() => setTab('settings')}>
+                  ⚙️ Edit Creator Profile & Bio
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setTab('products')}>
+                  🎨 View All Products ({stats.products || products.length || 0})
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setTab('orders')}>
+                  📦 Manage Orders ({stats.awaitingVerification || 0} pending payment verification)
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => setTab('moderation')}>
+                  🛡️ Review Community Posts ({stats.pendingPosts || 0})
+                </button>
+                <Link to="/community/new" className="btn btn-secondary btn-sm">
+                  📸 Share Post to Community
+                </Link>
+              </div>
+              <div style={{ padding: '16px', background: 'var(--paper-dark)', borderRadius: 'var(--radius-md)' }}>
+                <strong>💡 Kid Creator Tip:</strong> Take bright, clear photos of your origami, drawings, or crafts in natural light! Buyers love seeing different angles and close-up details.
+              </div>
             </div>
           </div>
         )}
@@ -895,6 +946,186 @@ export default function AdminDashboard() {
               ))}
             </div>
           )
+        )}
+
+        {/* Payments Tab — UPI QR Code & Payment Setup */}
+        {tab === 'payments' && (
+          <div style={{ maxWidth: 860, margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', margin: 0 }}>
+                  💳 UPI Payment QR Code & Checkout Setup
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '4px 0 0' }}>
+                  Upload your personal UPI QR code (Google Pay, PhonePe, Paytm, or BHIM) so buyers can scan and pay during checkout!
+                </p>
+              </div>
+            </div>
+
+            {settingsSuccess && (
+              <div style={{
+                background: 'rgba(46, 125, 50, 0.12)',
+                border: '1.5px solid #2e7d32',
+                color: 'var(--text-main)',
+                padding: '14px 18px',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                fontWeight: 600,
+                fontSize: '0.95rem'
+              }}>
+                <span style={{ fontSize: '1.3rem' }}>🎉</span>
+                <span>{settingsSuccess}</span>
+              </div>
+            )}
+
+            {settingsError && (
+              <div style={{
+                background: 'rgba(211, 47, 47, 0.12)',
+                border: '1.5px solid #d32f2f',
+                color: 'var(--danger)',
+                padding: '14px 18px',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                fontWeight: 600,
+                fontSize: '0.95rem'
+              }}>
+                <span>⚠️</span>
+                <span>{settingsError}</span>
+              </div>
+            )}
+
+            <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+              <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                {/* QR Preview Box */}
+                <div style={{
+                  width: 240,
+                  minHeight: 240,
+                  borderRadius: 'var(--radius-lg)',
+                  border: '2px dashed var(--border)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 16,
+                  background: 'var(--paper-dark)',
+                  position: 'relative',
+                  textAlign: 'center'
+                }}>
+                  {settingsData.upiQrImageUrl ? (
+                    <>
+                      <img
+                        src={mediaUrl(settingsData.upiQrImageUrl)}
+                        alt="Current UPI QR Code"
+                        style={{ width: '100%', height: 'auto', maxHeight: 200, objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+                      />
+                      <div style={{ fontSize: '0.8rem', color: 'var(--success)', marginTop: 8, fontWeight: 700 }}>
+                        ✅ Active at Checkout
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ padding: 16 }}>
+                      <div style={{ fontSize: '3.5rem', marginBottom: 8 }}>📱</div>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 4 }}>No QR Code Uploaded</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Tap upload button to add your UPI QR</div>
+                    </div>
+                  )}
+
+                  {qrUploading && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(0,0,0,0.7)',
+                      borderRadius: 'var(--radius-lg)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 600
+                    }}>
+                      ⏳ Uploading QR Image...
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload & Controls */}
+                <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 6px', fontFamily: 'var(--font-display)', fontSize: '1.2rem' }}>
+                      Upload QR Code Image
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                      Take a screenshot of your personal QR code from <strong>Google Pay</strong>, <strong>PhonePe</strong>, or <strong>Paytm</strong> and upload it here.
+                    </p>
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={qrInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleQrUpload}
+                  />
+
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={qrUploading}
+                      onClick={() => qrInputRef.current?.click()}
+                    >
+                      {qrUploading ? '⏳ Uploading...' : '📁 Upload / Change UPI QR Code'}
+                    </button>
+                    {settingsData.upiQrImageUrl && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={handleRemoveQr}
+                      >
+                        🗑️ Remove QR Code
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ background: 'var(--paper-dark)', padding: '14px 18px', borderRadius: 'var(--radius-md)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                    💡 <strong>How Customers Pay:</strong> When a buyer clicks "Buy Now" and enters their address, they are shown this QR code to scan on their phone with any UPI app, and then they upload their payment screenshot to confirm the order!
+                  </div>
+
+                  <form onSubmit={handleSaveSettings}>
+                    <div style={{ marginTop: 8 }}>
+                      <label className="form-label" style={{ fontWeight: 600 }}>Payment Instructions for Buyers</label>
+                      <textarea
+                        className="form-input"
+                        rows={3}
+                        placeholder="e.g. Scan the QR code using Google Pay, PhonePe, or Paytm, pay the exact amount, and upload the payment screenshot!"
+                        value={settingsData.paymentInstructions}
+                        onChange={e => setSettingsData(prev => ({ ...prev, paymentInstructions: e.target.value }))}
+                      />
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        This text is shown right above the QR code on the payment screen.
+                      </span>
+                    </div>
+
+                    <div style={{ marginTop: 14 }}>
+                      <button
+                        type="submit"
+                        className="btn btn-secondary"
+                        disabled={settingsSaving}
+                      >
+                        {settingsSaving ? '💾 Saving Instructions...' : '💾 Save Payment Instructions'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Settings Tab — Creator Profile & Site Personalization */}

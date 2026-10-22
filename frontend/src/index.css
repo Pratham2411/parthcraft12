@@ -222,23 +222,39 @@ h3 { font-size: clamp(1.2rem, 2.5vw, 1.5rem); }
 }
 
 .nav-theme-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
+  gap: 6px;
   height: 36px;
+  padding: 0 12px;
   border-radius: var(--radius-full);
   background: var(--paper-dark);
   border: 1px solid var(--border);
-  font-size: 1.05rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
   cursor: pointer;
   transition: all var(--transition);
+  white-space: nowrap;
+  user-select: none;
 }
 
 .nav-theme-btn:hover {
   background: var(--primary-light);
-  transform: scale(1.08);
+  border-color: var(--clay);
+  color: var(--clay);
+  transform: translateY(-1px);
+}
+
+.nav-theme-btn .theme-toggle-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.nav-theme-btn .theme-toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .navbar-inner {
